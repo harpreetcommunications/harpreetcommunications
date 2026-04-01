@@ -171,6 +171,18 @@
     </div>
 
 <script>
+    const firebaseConfig = {
+       apiKey: "AIzaSyBHzvyTGmY2l7o1UaPnq7TvsAVdFTr0SNo",
+  authDomain: "harpreet-communications.firebaseapp.com",
+  projectId: "harpreet-communications",
+  storageBucket: "harpreet-communications.firebasestorage.app",
+  messagingSenderId: "45127650773",
+  appId: "1:45127650773:web:8527ac3af958d63a88815c",
+  measurementId: "G-HQVBC1WS3F"
+      };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    
     let db = JSON.parse(localStorage.getItem('hp_final_clean_db')) || [];
     let config = JSON.parse(localStorage.getItem('hp_final_clean_cfg')) || { pass: 'preet786' };
     let activeCID = null;
