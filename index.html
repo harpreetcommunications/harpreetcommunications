@@ -1,4 +1,4 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pa">
 <head>
     <meta charset="UTF-8">
@@ -42,20 +42,21 @@
 
     <div id="login-overlay">
         <div class="login-box">
-            <h2 style="color:var(--primary); margin-bottom:25px;">HARPREET COMMUNICATIONS</h2>
+            <h2 style="color:var(--primary); margin-bottom:25px;">HARPREET COMM.</h2>
             <input type="password" id="loginPass" class="input-field" placeholder="Enter Password" onkeypress="if(event.key==='Enter')checkLogin()">
             <button class="btn" style="background:var(--accent); color:white; width:100%" onclick="checkLogin()">LOGIN</button>
+            <p id="error-msg" style="color:red; font-size:12px; margin-top:10px; display:none;"></p>
         </div>
     </div>
 
-    <div class="wrapper">
+    <div class="wrapper" id="main-app" style="display:none;">
         <div class="sidebar">
             <div class="sidebar-brand">HARPREET COMM.</div>
             <div class="nav-menu">
                 <div class="nav-item active" onclick="showPage('home')"><i class="fa fa-home"></i> Dashboard</div>
                 <div class="nav-item" onclick="showPage('add-client')"><i class="fa fa-user-plus"></i> Add Client</div>
                 <div class="nav-item" onclick="showPage('all-clients')"><i class="fa fa-users"></i> Accounts</div>
-                <div class="nav-item" onclick="exportData()"><i class="fa fa-file-excel"></i> Backup</div>
+                <div class="nav-item" onclick="exportData()"><i class="fa fa-file-excel"></i> Export</div>
                 <div class="nav-item" onclick="showPage('settings')"><i class="fa fa-cog"></i> Settings</div>
             </div>
             <div class="nav-item" style="margin-top:auto;" onclick="location.reload()"><i class="fa fa-sign-out-alt"></i> Logout</div>
@@ -63,8 +64,8 @@
 
         <div class="main-panel">
             <div class="top-bar">
-                <input type="text" id="gSearch" class="search-input" placeholder="Quick Search Name or Mobile..." onkeyup="searchClients()">
-                <div id="sync-status" style="color:var(--success); font-weight:bold; font-size:12px;">Cloud Synced <i class="fa fa-cloud"></i></div>
+                <input type="text" id="gSearch" class="input-field" style="width:300px; margin:0;" placeholder="Search Name or Mobile..." onkeyup="searchClients()">
+                <div id="sync-status" style="color:var(--success); font-weight:bold; font-size:12px;">Cloud Ready <i class="fa fa-cloud"></i></div>
             </div>
 
             <div class="content-scroll">
@@ -94,15 +95,15 @@
                 </div>
 
                 <div id="all-clients" class="page">
-                    <div class="box"><h2>Account Directory</h2><table><thead><tr><th>Name</th><th>Mobile</th><th>Balance</th></tr></thead><tbody id="fullClientList"></tbody></table></div>
+                    <div class="box"><h2>Account Directory</h2><table><thead><tr><th>Name</th><th>Phone</th><th>Balance</th></tr></thead><tbody id="fullClientList"></tbody></table></div>
                 </div>
 
                 <div id="add-client" class="page">
                     <div class="box" style="max-width:500px; margin:auto;">
-                        <h2>New Account</h2>
+                        <h2>New Online Account</h2>
                         <input type="text" id="ncName" class="input-field" placeholder="Client Name">
                         <input type="text" id="ncPhone" class="input-field" placeholder="Mobile Number">
-                        <button class="btn" style="background:var(--success); color:white; width:100%" onclick="addClient()">Open Online Account</button>
+                        <button class="btn" style="background:var(--success); color:white; width:100%" onclick="addClient()">Save to Cloud</button>
                     </div>
                 </div>
 
@@ -116,8 +117,8 @@
                         <h3>New Entry</h3>
                         <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
                             <input type="text" id="tService" class="input-field" placeholder="Service">
-                            <input type="number" id="tTotal" class="input-field" placeholder="Total">
-                            <input type="number" id="tPaid" class="input-field" placeholder="Paid">
+                            <input type="number" id="tTotal" class="input-field" placeholder="Total Fees">
+                            <input type="number" id="tPaid" class="input-field" placeholder="Paid Now">
                         </div>
                         <textarea id="tNote" class="input-field" placeholder="Important Note..."></textarea>
                         <button class="btn" style="background:var(--success); color:white" onclick="addTransaction()">Save & Sync</button>
@@ -127,9 +128,9 @@
 
                 <div id="settings" class="page">
                     <div class="box" style="max-width:400px; margin:auto;">
-                        <h2>Security</h2>
+                        <h2>Security Settings</h2>
                         <input type="password" id="newPass" class="input-field" placeholder="New Password">
-                        <button class="btn" style="background:var(--accent); color:white; width:100%" onclick="savePass()">Update</button>
+                        <button class="btn" style="background:var(--accent); color:white; width:100%" onclick="savePass()">Update Password</button>
                     </div>
                 </div>
             </div>
@@ -137,7 +138,7 @@
     </div>
 
 <script>
-    // --- FIREBASE CONFIG (Tuhadi Details) ---
+    // --- 1. FIREBASE CONFIG (Tuhadi Details) ---
     const firebaseConfig = {
         apiKey: "AIzaSyBHzvyTGmY2l7o1UaPnq7TvsAVdFTr0SNo",
         authDomain: "harpreet-communications.firebaseapp.com",
@@ -148,7 +149,7 @@
         appId: "1:45127650773:web:8527ac3af958d63a88815c"
     };
 
-    // Initialize Firebase
+    // Firebase Init
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
     const dbRef = database.ref('erp_data');
@@ -158,19 +159,28 @@
     let activeCID = null;
     let ch1 = null, ch2 = null;
 
-    // --- CLOUD SYNC LOGIC ---
-    dbRef.on('value', (snapshot) => {
-        const val = snapshot.val();
-        db = val ? Object.values(val) : [];
-        refreshDashboard();
-        if(document.getElementById('all-clients').classList.contains('active')) refreshClientList();
-    });
-
+    // LOGIN CHECK
     function checkLogin() {
-        if(document.getElementById('loginPass').value === config.pass) {
+        const val = document.getElementById('loginPass').value;
+        if(val === config.pass) {
             document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+            initCloudSync();
             showPage('home');
-        } else alert("Wrong Password!");
+        } else {
+            alert("Galat Password!");
+        }
+    }
+
+    // CLOUD SYNC
+    function initCloudSync() {
+        dbRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            db = data ? Object.values(data) : [];
+            console.log("Data Synced from Firebase!");
+            refreshDashboard();
+            if(document.getElementById('all-clients').classList.contains('active')) refreshClientList();
+        });
     }
 
     function showPage(id) {
@@ -194,7 +204,7 @@
         db.forEach(c => {
             const tArr = c.trans ? Object.values(c.trans) : [];
             let b = tArr.reduce((s,t) => s + (t.bal || 0), 0);
-            tb.innerHTML += `<tr onclick="openProfile('${c.id}')"><td><b>${c.name}</b></td><td>${c.phone}</td><td style="color:red; font-weight:bold">₹${b}</td></tr>`;
+            tb.innerHTML += `<tr onclick="openProfile('${c.id}')" style="cursor:pointer"><td><b>${c.name}</b></td><td>${c.phone}</td><td style="color:red; font-weight:bold">₹${b}</td></tr>`;
         });
     }
 
@@ -227,7 +237,7 @@
     }
 
     function deleteEntry(tid) {
-        if(confirm("Delete entry?")) dbRef.child(activeCID).child('trans').child(tid).remove();
+        if(confirm("Delete koshish?")) dbRef.child(activeCID).child('trans').child(tid).remove();
     }
 
     function refreshDashboard() {
@@ -272,9 +282,6 @@
             });
         }
     }
-</script>
-</body>
-</html>
 </script>
 </body>
 </html>
