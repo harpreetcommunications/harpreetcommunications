@@ -2,7 +2,7 @@
 <html lang="pa">
 <head>
     <meta charset="UTF-8">
-    <title>Harpreet Communications - Professional ERP</title>
+    <title>Harpreet Communications</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -12,8 +12,8 @@
         .wrapper { display: flex; height: 100vh; width: 100vw; }
         .sidebar { width: var(--sidebar-w); background: var(--primary); color: white; display: flex; flex-direction: column; flex-shrink: 0; }
         .sidebar-brand { padding: 20px; text-align: center; background: #000; font-weight: bold; border-bottom: 1px solid #333; font-size: 1.1rem; }
-        .nav-item { padding: 12px 20px; display: flex; align-items: center; gap: 12px; cursor: pointer; color: #d2dae2; font-size: 14px; border-left: 4px solid transparent; }
-        .nav-item.active { background: #2f3542; color: white; border-left-color: var(--accent); }
+        .nav-item { padding: 12px 20px; display: flex; align-items: center; gap: 12px; cursor: pointer; color: #d2dae2; font-size: 14px; border-left: 4px solid transparent; transition: 0.2s;}
+        .nav-item:hover, .nav-item.active { background: #2f3542; color: white; border-left-color: var(--accent); }
         .main-panel { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
         .top-bar { height: 60px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .content-scroll { flex-grow: 1; overflow-y: auto; padding: 20px; }
@@ -56,7 +56,7 @@
         <div class="main-panel">
             <div class="top-bar">
                 <div style="font-weight:bold;">Welcome, <span id="user-name-display"></span></div>
-                <div style="color:var(--success); font-size:12px; font-weight:bold;"><i class="fa fa-cloud"></i> CLOUD ACTIVE</div>
+                <div style="color:var(--success); font-size:12px; font-weight:bold;"><i class="fa fa-cloud"></i> SECURE CLOUD SYNC</div>
             </div>
 
             <div class="content-scroll">
@@ -72,7 +72,7 @@
                 <div id="all-clients" class="page">
                     <div class="box">
                         <h2>Client Directory</h2>
-                        <input type="text" id="clientSearch" class="input-field" placeholder="Search Name or Mobile..." onkeyup="filterClients(this.value)">
+                        <input type="text" id="clientSearch" class="input-field" placeholder="Search Name..." onkeyup="filterClients(this.value)">
                         <table><thead><tr><th>Name</th><th>Phone</th><th>Balance</th><th>Action</th></tr></thead><tbody id="clientBody"></tbody></table>
                     </div>
                 </div>
@@ -81,8 +81,8 @@
                     <div class="box" style="max-width:500px; margin:auto;">
                         <h2>Add New Client Account</h2>
                         <input type="text" id="ncName" class="input-field" placeholder="Client Name">
-                        <input type="text" id="ncPhone" class="input-field" placeholder="Mobile Number">
-                        <button class="btn" style="background:var(--success); color:white; width:100%" onclick="addClient()">Save Cloud</button>
+                        <input type="text" id="ncPhone" class="input-field" placeholder="Mobile Number (Optional)">
+                        <button class="btn" style="background:var(--success); color:white; width:100%" onclick="addClient()">Create Account</button>
                     </div>
                 </div>
 
@@ -97,14 +97,14 @@
                             <input type="number" id="tPaid" class="input-field" placeholder="Paid">
                         </div>
                         <textarea id="tNote" class="input-field" placeholder="Notes..."></textarea>
-                        <button class="btn" id="saveBtn" style="background:var(--success); color:white" onclick="saveTransaction()">Save & Sync</button>
+                        <button class="btn" id="saveBtn" style="background:var(--success); color:white" onclick="saveTransaction()">Save & Sync Data</button>
                     </div>
                     <div class="box"><table><thead><tr><th>Date</th><th>Service</th><th>Staff</th><th>Total</th><th>Paid</th><th>Action</th></tr></thead><tbody id="pHistory"></tbody></table></div>
                 </div>
 
                 <div id="staff-mgmt" class="page">
                     <div class="box">
-                        <h2>Add New Staff</h2>
+                        <h2>Register New Staff</h2>
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                             <input type="text" id="stName" class="input-field" placeholder="Full Name">
                             <input type="text" id="stUser" class="input-field" placeholder="Username">
@@ -114,7 +114,7 @@
                         <button class="btn" style="background:var(--accent); color:white" onclick="registerStaff()">Register</button>
                     </div>
                     <div class="box">
-                        <h3>Staff List</h3>
+                        <h3>Staff List & Passwords</h3>
                         <table><thead><tr><th>Name</th><th>User ID</th><th>Password</th><th>Action</th></tr></thead><tbody id="staffListTable"></tbody></table>
                     </div>
                 </div>
@@ -126,10 +126,7 @@
                         <p id="sdUser">User ID: --</p>
                         <h3 id="sdSalary" style="color:var(--success)">Calculated Salary: ₹0</h3>
                     </div>
-                    <div class="box">
-                        <h3>Attendance & Work Summary</h3>
-                        <div id="sdSummary"></div>
-                    </div>
+                    <div class="box"><div id="sdSummary"></div></div>
                 </div>
 
                 <div id="settings" class="page">
@@ -176,31 +173,25 @@
                 isAdmin = (u === 'admin');
                 document.getElementById('login-overlay').style.display = 'none';
                 document.getElementById('main-app').style.display = 'flex';
-                document.getElementById('user-name-display').innerText = data.name;
+                document.getElementById('user-name-display').innerText = data.name || "Admin";
                 if(isAdmin) document.getElementById('admin-only').style.display = 'block';
                 
-                // Attendance Sync
-                const today = new Date().toLocaleDateString('en-CA');
-                db.ref('attendance/' + u + '/' + today).set(true);
-                
+                db.ref('attendance/' + u + '/' + new Date().toLocaleDateString('en-CA')).set(true);
                 initCloudSync();
-            } else alert("Galat Credentials!");
+            } else alert("Galat Username ya Password!");
         });
     }
 
     function initCloudSync() {
-        // Sync Clients
         db.ref('clients').on('value', snap => {
-            const val = snap.val();
-            clientsList = val ? Object.values(val) : [];
+            clientsList = snap.val() ? Object.values(snap.val()) : [];
             if(document.getElementById('all-clients').classList.contains('active')) renderClients();
         });
 
-        // Sync Transactions
         db.ref('erp_data').on('value', snap => {
-            const val = snap.val();
-            erpData = val ? Object.values(val) : [];
+            erpData = snap.val() ? Object.values(snap.val()) : [];
             updateStats();
+            if(document.getElementById('all-clients').classList.contains('active')) renderClients();
             if(document.getElementById('profile').classList.contains('active')) renderHistory();
         });
 
@@ -210,60 +201,142 @@
                 const body = document.getElementById('staffListTable'); body.innerHTML = '';
                 for(let key in users) {
                     if(key !== 'admin') {
-                        body.innerHTML += `<tr><td>${users[key].name}</td><td>${key}</td><td><span style="color:red; font-weight:bold">${users[key].password}</span></td><td><button class="btn" style="background:var(--accent); color:white" onclick="viewStaffDetail('${key}')">View Detail</button></td></tr>`;
+                        body.innerHTML += `<tr><td>${users[key].name}</td><td>${key}</td><td><span style="color:red; font-weight:bold">${users[key].password}</span></td><td><button class="btn" style="background:var(--accent); color:white; padding:5px 10px;" onclick="viewStaffDetail('${key}')">View</button></td></tr>`;
                     }
                 }
             });
         }
     }
 
+    // --- FIX: Add Client Opens Profile Immediately ---
     function addClient() {
         const n = document.getElementById('ncName').value;
-        const p = document.getElementById('ncPhone').value;
-        if(!n || !p) return alert("Details bharo!");
+        const p = document.getElementById('ncPhone').value || "N/A";
+        if(!n) return alert("Client Name is required!");
+        
         const cid = Date.now().toString();
         db.ref('clients/' + cid).set({ id: cid, name: n, phone: p }).then(() => {
-            alert("Client Added Online!");
             document.getElementById('ncName').value = '';
             document.getElementById('ncPhone').value = '';
-            showPage('all-clients');
+            // Immediately open profile so they can enter data
+            openProfile(cid, n);
         });
     }
 
+    // --- FIX: Render Old & New Clients Properly ---
     function renderClients() {
         const body = document.getElementById('clientBody'); body.innerHTML = '';
+        
+        // Render New System Clients
         clientsList.forEach(c => {
-            const bal = erpData.filter(d => d.clientID === c.id).reduce((s,t) => s + t.bal, 0);
-            body.innerHTML += `<tr onclick="openProfile('${c.id}')" style="cursor:pointer"><td><b>${c.name}</b></td><td>${c.phone}</td><td style="color:red; font-weight:bold">₹${bal}</td><td>View</td></tr>`;
+            const bal = erpData.filter(d => d.clientID === c.id).reduce((s,t) => s + (t.bal || 0), 0);
+            body.innerHTML += `<tr onclick="openProfile('${c.id}', '${c.name}')" style="cursor:pointer"><td><b>${c.name}</b></td><td>${c.phone}</td><td style="color:red; font-weight:bold">₹${bal}</td><td>View</td></tr>`;
+        });
+
+        // Render Legacy Clients (Before V3 update)
+        const newIDs = clientsList.map(c => c.id);
+        const legacyClients = [...new Set(erpData.map(d => d.clientID))].filter(id => !newIDs.includes(id));
+        
+        legacyClients.forEach(cName => {
+            if(!cName || cName === "Unknown") return;
+            const bal = erpData.filter(d => d.clientID === cName).reduce((s,t) => s + (t.bal || 0), 0);
+            body.innerHTML += `<tr onclick="openProfile('${cName}', '${cName}')" style="cursor:pointer"><td><b>${cName}</b></td><td>Old Entry</td><td style="color:red; font-weight:bold">₹${bal}</td><td>View</td></tr>`;
         });
     }
 
-    function openProfile(cid) {
+    function openProfile(cid, cname) {
         activeCID = cid;
-        const client = clientsList.find(x => x.id === cid);
-        document.getElementById('pName').innerText = client.name;
+        document.getElementById('pName').innerText = cname || "Client Detail";
         renderHistory();
         showPage('profile');
     }
 
+    // --- FIX: Bulletproof Save Transaction ---
     function saveTransaction() {
-        const s = document.getElementById('tService').value, t = parseFloat(document.getElementById('tTotal').value), p = parseFloat(document.getElementById('tPaid').value) || 0, n = document.getElementById('tNote').value;
-        if(!s || isNaN(t)) return alert("Details bharo!");
+        const s = document.getElementById('tService').value || "General Service";
+        const t = parseFloat(document.getElementById('tTotal').value) || 0;
+        const p = parseFloat(document.getElementById('tPaid').value) || 0;
+        const n = document.getElementById('tNote').value || " "; // Space to prevent Firebase dropping it
+
         const tid = editModeTID || Date.now().toString();
-        db.ref('erp_data/' + tid).set({ id: tid, clientID: activeCID, date: new Date().toLocaleDateString('en-GB'), service: s, total: t, paid: p, bal: t-p, note: n, addedBy: loggedUser.name, addedByUID: loggedUser.username }).then(() => {
-            editModeTID = null; document.getElementById('saveBtn').innerText = "Save & Sync";
+        
+        // Fallbacks so Firebase NEVER crashes
+        const uName = loggedUser ? (loggedUser.name || "Admin") : "Admin";
+        const uID = loggedUser ? (loggedUser.username || "admin") : "admin";
+
+        const entry = { 
+            id: tid, 
+            clientID: activeCID || "Unknown", 
+            date: new Date().toLocaleDateString('en-GB'), 
+            service: s, 
+            total: t, 
+            paid: p, 
+            bal: t - p, 
+            note: n, 
+            addedBy: uName, 
+            addedByUID: uID 
+        };
+
+        db.ref('erp_data/' + tid).set(entry).then(() => {
+            editModeTID = null; 
+            document.getElementById('saveBtn').innerText = "Save & Sync";
             ['tService','tTotal','tPaid','tNote'].forEach(id => document.getElementById(id).value = '');
-        });
+            alert("Entry Saved Online!");
+        }).catch(err => alert("Error saving: " + err.message));
+    }
+
+    function editEntry(tid) {
+        const e = erpData.find(x => x.id === tid);
+        if(e) {
+            document.getElementById('tService').value = e.service;
+            document.getElementById('tTotal').value = e.total;
+            document.getElementById('tPaid').value = e.paid;
+            document.getElementById('tNote').value = e.note;
+            editModeTID = tid; 
+            document.getElementById('saveBtn').innerText = "Update Entry";
+            window.scrollTo(0,0);
+        }
     }
 
     function renderHistory() {
         const body = document.getElementById('pHistory'); body.innerHTML = ''; let bal = 0;
         erpData.filter(d => d.clientID === activeCID).forEach(t => {
-            if(!isAdmin && t.addedByUID !== loggedUser.username) return;
-            bal += t.bal;
-            body.innerHTML += `<tr><td>${t.date}</td><td>${t.service}</td><td>${t.addedBy}</td><td>₹${t.total}</td><td>₹${t.paid}</td><td><button class="btn" style="background:orange; color:white" onclick="editEntry('${t.id}')">Edit</button></td></tr>`;
+            const entryUID = t.addedByUID || "admin";
+            const myUID = loggedUser ? (loggedUser.username || "admin") : "admin";
+            
+            // Sub-user only sees own entries
+            if(!isAdmin && entryUID !== myUID) return;
+            
+            bal += (t.bal || 0);
+            body.innerHTML += `<tr><td>${t.date}</td><td>${t.service}</td><td>${t.addedBy || "Admin"}</td><td>₹${t.total}</td><td>₹${t.paid}</td><td><button class="btn" style="background:orange; color:white; padding:5px 10px;" onclick="editEntry('${t.id}')">Edit</button></td></tr>`;
         });
         document.getElementById('pBalance').innerText = "₹" + bal;
+    }
+
+    function filterClients(q) {
+        q = q.toLowerCase();
+        const trs = document.getElementById('clientBody').getElementsByTagName('tr');
+        for(let i=0; i<trs.length; i++) {
+            trs[i].style.display = trs[i].innerText.toLowerCase().includes(q) ? "" : "none";
+        }
+    }
+
+    function updateStats() {
+        let rev=0, rec=0, pend=0;
+        erpData.forEach(t => { rev += (t.total || 0); rec += (t.paid || 0); pend += (t.bal || 0); });
+        document.getElementById('d-rev').innerText = "₹" + rev;
+        document.getElementById('d-rec').innerText = "₹" + rec;
+        document.getElementById('d-pend').innerText = "₹" + pend;
+        // Total unique clients (New + Old)
+        const allClientIDs = [...new Set(erpData.map(d => d.clientID))];
+        const combinedCount = new Set([...allClientIDs, ...clientsList.map(c=>c.id)]).size;
+        document.getElementById('d-cl').innerText = combinedCount;
+    }
+
+    function showPage(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
     }
 
     function viewStaffDetail(uid) {
@@ -275,33 +348,18 @@
             db.ref('attendance/' + uid).once('value', attSnap => {
                 const days = attSnap.val() ? Object.keys(attSnap.val()).length : 0;
                 const calSalary = (u.salary / 30) * days;
-                document.getElementById('sdSalary').innerText = "Calculated Salary (" + days + " Days Login): ₹" + calSalary.toFixed(0);
-                document.getElementById('sdSummary').innerHTML = `<p>Monthly Target Status: Online</p><p>Total Entries Done: ${erpData.filter(t => t.addedByUID === uid).length}</p>`;
+                document.getElementById('sdSalary').innerText = "Calculated Salary (" + days + " Days): ₹" + calSalary.toFixed(0);
+                document.getElementById('sdSummary').innerHTML = `<p>Total Entries Done: <b>${erpData.filter(t => t.addedByUID === uid).length}</b></p>`;
             });
             showPage('staff-detail-page');
         });
     }
 
-    function updateStats() {
-        let rev=0, rec=0, pend=0;
-        erpData.forEach(t => { rev += t.total; rec += t.paid; pend += t.bal; });
-        document.getElementById('d-rev').innerText = "₹" + rev;
-        document.getElementById('d-rec').innerText = "₹" + rec;
-        document.getElementById('d-pend').innerText = "₹" + pend;
-        document.getElementById('d-cl').innerText = clientsList.length;
-    }
-
-    function showPage(id) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-    }
-
     function registerStaff() {
         const n = document.getElementById('stName').value, u = document.getElementById('stUser').value.trim(), p = document.getElementById('stPass').value, s = document.getElementById('stSalary').value;
-        if(!n || !u || !p) return alert("Details bharo!");
+        if(!n || !u || !p) return alert("Fill all fields!");
         db.ref('users/' + u).set({ name: n, username: u, password: p, salary: s }).then(() => {
-            alert("Staff Added!");
+            alert("Staff Registered Online!");
             ['stName','stUser','stPass','stSalary'].forEach(id => document.getElementById(id).value = '');
         });
     }
@@ -310,7 +368,7 @@
         const op = document.getElementById('oldPass').value, np = document.getElementById('newPass').value, cp = document.getElementById('confirmPass').value;
         if(loggedUser.password !== op) return alert("Wrong Old Password!");
         if(np !== cp) return alert("Mismatch!");
-        db.ref('users/' + loggedUser.username + '/password').set(np).then(() => { alert("Updated!"); location.reload(); });
+        db.ref('users/' + loggedUser.username + '/password').set(np).then(() => { alert("Password Updated Everywhere!"); location.reload(); });
     }
 </script>
 </body>
