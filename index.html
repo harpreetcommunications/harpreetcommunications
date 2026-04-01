@@ -2,11 +2,10 @@
 <html lang="pa">
 <head>
     <meta charset="UTF-8">
-    <title>Harpreet Communications - Cloud ERP</title>
+    <title>Harpreet Communications - Professional Cloud ERP</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -15,48 +14,50 @@
         :root { --sidebar-w: 240px; --primary: #1e272e; --accent: #3498db; --success: #05c46b; --danger: #ff3f34; --bg: #f1f2f6; }
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background: var(--bg); overflow: hidden; }
         .wrapper { display: flex; height: 100vh; width: 100vw; }
-        .sidebar { width: var(--sidebar-w); background: var(--primary); color: white; display: flex; flex-direction: column; flex-shrink: 0; box-shadow: 4px 0 10px rgba(0,0,0,0.1); }
-        .sidebar-brand { padding: 25px; text-align: center; background: #050505; font-size: 1.1rem; font-weight: bold; border-bottom: 1px solid #3d3d3d; letter-spacing: 1px; }
-        .nav-menu { flex-grow: 1; padding-top: 20px; }
-        .nav-item { padding: 15px 25px; display: flex; align-items: center; gap: 15px; cursor: pointer; color: #d2dae2; transition: 0.3s; border-left: 5px solid transparent; font-size: 15px; }
-        .nav-item:hover, .nav-item.active { background: #2f3542; color: white; border-left: 4px solid var(--accent); }
+        
+        .sidebar { width: var(--sidebar-w); background: var(--primary); color: white; display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-brand { padding: 20px; text-align: center; background: #000; font-weight: bold; border-bottom: 1px solid #333; }
+        .nav-item { padding: 12px 20px; display: flex; align-items: center; gap: 12px; cursor: pointer; color: #d2dae2; font-size: 14px; border-left: 4px solid transparent; }
+        .nav-item.active { background: #2f3542; color: white; border-left-color: var(--accent); }
+
         .main-panel { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .top-bar { height: 65px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 35px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .content-scroll { flex-grow: 1; overflow-y: auto; padding: 25px; }
-        .page { display: none; width: 100%; height: 100%; }
-        .page.active { display: block; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
-        .stat-card { background: white; padding: 20px; border-radius: 15px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .icon-box { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; }
-        .box { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
-        .btn { padding: 12px 25px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
-        .input-field { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
+        .top-bar { height: 60px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .content-scroll { flex-grow: 1; overflow-y: auto; padding: 20px; }
+        .page { display: none; } .page.active { display: block; }
+
+        .box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+        .input-field { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        
         #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); z-index: 10000; display: flex; justify-content: center; align-items: center; }
-        .login-box { background: white; padding: 40px; border-radius: 20px; width: 320px; text-align: center; }
+        .login-box { background: white; padding: 30px; border-radius: 15px; width: 320px; text-align: center; }
+        
+        @media print { .sidebar, .top-bar, .btn, .box:not(.print-bill) { display: none !important; } .wrapper { display: block; } .print-bill { display: block !important; border: 1px solid #000; padding: 20px; } }
     </style>
 </head>
 <body>
 
     <div id="login-overlay">
         <div class="login-box">
-            <h2 style="color:var(--primary); margin-bottom:25px;">HARPREET COMM.</h2>
-            <input type="password" id="loginPass" class="input-field" placeholder="Enter Password" onkeypress="if(event.key==='Enter')checkLogin()">
-            <button class="btn" style="background:var(--accent); color:white; width:100%" onclick="checkLogin()">LOGIN</button>
-            <p id="error-msg" style="color:red; font-size:12px; margin-top:10px; display:none;"></p>
+            <h2>H.P. CLOUD LOGIN</h2>
+            <input type="text" id="logUser" class="input-field" placeholder="Username">
+            <input type="password" id="logPass" class="input-field" placeholder="Password" onkeypress="if(event.key==='Enter')handleLogin()">
+            <button class="btn" style="background:var(--accent); color:white; width:100%" onclick="handleLogin()">Login</button>
         </div>
     </div>
 
     <div class="wrapper" id="main-app" style="display:none;">
         <div class="sidebar">
-            <div class="sidebar-brand">HARPREET COMM.</div>
+            <div class="sidebar-brand">HP COMMUNICATIONS</div>
             <div class="nav-menu">
                 <div class="nav-item active" onclick="showPage('home')"><i class="fa fa-home"></i> Dashboard</div>
-                <div class="nav-item" onclick="showPage('add-client')"><i class="fa fa-user-plus"></i> Add Client</div>
                 <div class="nav-item" onclick="showPage('all-clients')"><i class="fa fa-users"></i> Accounts</div>
-                <div class="nav-item" onclick="exportData()"><i class="fa fa-file-excel"></i> Export</div>
+                <div class="nav-item" onclick="showPage('add-client')"><i class="fa fa-user-plus"></i> New Client</div>
+                <div id="admin-only" style="display:none;">
+                    <div class="nav-item" onclick="showPage('staff-mgmt')"><i class="fa fa-user-tie"></i> Staff & Salary</div>
+                </div>
                 <div class="nav-item" onclick="showPage('settings')"><i class="fa fa-cog"></i> Settings</div>
             </div>
             <div class="nav-item" style="margin-top:auto;" onclick="location.reload()"><i class="fa fa-sign-out-alt"></i> Logout</div>
@@ -64,73 +65,74 @@
 
         <div class="main-panel">
             <div class="top-bar">
-                <input type="text" id="gSearch" class="input-field" style="width:300px; margin:0;" placeholder="Search Name or Mobile..." onkeyup="searchClients()">
-                <div id="sync-status" style="color:var(--success); font-weight:bold; font-size:12px;">Cloud Ready <i class="fa fa-cloud"></i></div>
+                <div style="font-weight:bold;">Welcome, <span id="user-name-display"></span></div>
+                <div style="color:var(--success); font-size:12px;"><i class="fa fa-circle"></i> Cloud Synced</div>
             </div>
 
             <div class="content-scroll">
                 <div id="home" class="page active">
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="icon-box" style="background:var(--accent)"><i class="fa fa-indian-rupee-sign"></i></div>
-                            <div><h2 id="d-rev">₹0</h2><small>Total Revenue</small></div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="icon-box" style="background:var(--success)"><i class="fa fa-check-circle"></i></div>
-                            <div><h2 id="d-rec">₹0</h2><small>Received</small></div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="icon-box" style="background:var(--danger)"><i class="fa fa-clock"></i></div>
-                            <div><h2 id="d-pend" style="color:var(--danger)">₹0</h2><small>Pending</small></div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="icon-box" style="background:#f39c12"><i class="fa fa-users"></i></div>
-                            <div><h2 id="d-clients">0</h2><small>Accounts</small></div>
-                        </div>
+                    <div class="box" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:15px; text-align:center;">
+                        <div><h2 id="d-rev">₹0</h2><small>Total Revenue</small></div>
+                        <div><h2 id="d-rec">₹0</h2><small>Received</small></div>
+                        <div><h2 id="d-pend" style="color:var(--danger)">₹0</h2><small>Pending</small></div>
+                        <div><h2 id="d-cl">0</h2><small>Total Clients</small></div>
                     </div>
-                    <div class="charts-row">
-                        <div class="box"><h3>Payment Overview</h3><canvas id="payChart"></canvas></div>
-                        <div class="box"><h3>Service Analysis</h3><canvas id="workChart"></canvas></div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                        <div class="box"><canvas id="payChart" height="200"></canvas></div>
+                        <div class="box"><canvas id="workChart" height="200"></canvas></div>
                     </div>
                 </div>
 
                 <div id="all-clients" class="page">
-                    <div class="box"><h2>Account Directory</h2><table><thead><tr><th>Name</th><th>Phone</th><th>Balance</th></tr></thead><tbody id="fullClientList"></tbody></table></div>
-                </div>
-
-                <div id="add-client" class="page">
-                    <div class="box" style="max-width:500px; margin:auto;">
-                        <h2>New Online Account</h2>
-                        <input type="text" id="ncName" class="input-field" placeholder="Client Name">
-                        <input type="text" id="ncPhone" class="input-field" placeholder="Mobile Number">
-                        <button class="btn" style="background:var(--success); color:white; width:100%" onclick="addClient()">Save to Cloud</button>
+                    <div class="box">
+                        <h2>Client Accounts</h2>
+                        <input type="text" placeholder="Search..." class="input-field" onkeyup="searchClients(this.value)">
+                        <table><thead><tr><th>Name</th><th>Phone</th><th>Balance</th><th>Action</th></tr></thead><tbody id="clientBody"></tbody></table>
                     </div>
                 </div>
 
                 <div id="profile" class="page">
-                    <button class="btn" style="background:#95a5a6; color:white; margin-bottom:15px;" onclick="showPage('all-clients')">← Back</button>
-                    <div class="box" style="display:flex; justify-content:space-between; align-items:center;">
-                        <div><h2 id="pName">Name</h2><p id="pPhone">Phone</p></div>
-                        <h2 id="pBalance" style="color:var(--danger)">₹0</h2>
-                    </div>
-                    <div class="box">
-                        <h3>New Entry</h3>
+                    <button class="btn" onclick="showPage('all-clients')" style="background:#888; color:white; margin-bottom:10px;">Back</button>
+                    <div class="box" id="bill-area">
+                        <h2 id="pName">Name</h2>
+                        <h3 id="pBalance" style="color:var(--danger)">₹0</h3>
                         <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
                             <input type="text" id="tService" class="input-field" placeholder="Service">
-                            <input type="number" id="tTotal" class="input-field" placeholder="Total Fees">
-                            <input type="number" id="tPaid" class="input-field" placeholder="Paid Now">
+                            <input type="number" id="tTotal" class="input-field" placeholder="Total">
+                            <input type="number" id="tPaid" class="input-field" placeholder="Paid">
                         </div>
                         <textarea id="tNote" class="input-field" placeholder="Important Note..."></textarea>
-                        <button class="btn" style="background:var(--success); color:white" onclick="addTransaction()">Save & Sync</button>
+                        <button class="btn" style="background:var(--success); color:white" onclick="saveTransaction()">Save Sync</button>
                     </div>
-                    <div class="box"><table><thead><tr><th>Date</th><th>Service</th><th>Total</th><th>Paid</th><th>Bal</th><th>Del</th></tr></thead><tbody id="pHistoryBody"></tbody></table></div>
+                    <div class="box">
+                        <table><thead><tr><th>Date</th><th>Service</th><th>Added By</th><th>Total</th><th>Paid</th><th>Action</th></tr></thead><tbody id="pHistory"></tbody></table>
+                    </div>
+                </div>
+
+                <div id="staff-mgmt" class="page">
+                    <div class="box">
+                        <h2>Register Staff (Sub-User)</h2>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                            <input type="text" id="stName" class="input-field" placeholder="Staff Name">
+                            <input type="text" id="stUser" class="input-field" placeholder="Login ID">
+                            <input type="password" id="stPass" class="input-field" placeholder="Password">
+                            <input type="number" id="stSalary" class="input-field" placeholder="Monthly Salary">
+                        </div>
+                        <button class="btn" style="background:var(--accent); color:white" onclick="registerStaff()">Add Staff</button>
+                    </div>
+                    <div class="box">
+                        <h3>Staff Attendance & Salary Report</h3>
+                        <table><thead><tr><th>Name</th><th>Attendance (Days)</th><th>Current Salary</th></tr></thead><tbody id="staffTable"></tbody></table>
+                    </div>
                 </div>
 
                 <div id="settings" class="page">
                     <div class="box" style="max-width:400px; margin:auto;">
-                        <h2>Security Settings</h2>
+                        <h2>Change Cloud Password</h2>
+                        <input type="password" id="oldPass" class="input-field" placeholder="Old Password">
                         <input type="password" id="newPass" class="input-field" placeholder="New Password">
-                        <button class="btn" style="background:var(--accent); color:white; width:100%" onclick="savePass()">Update Password</button>
+                        <input type="password" id="confirmPass" class="input-field" placeholder="Confirm New Password">
+                        <button class="btn" style="background:var(--accent); color:white; width:100%" onclick="updateCloudPassword()">Update Everywhere</button>
                     </div>
                 </div>
             </div>
@@ -138,7 +140,7 @@
     </div>
 
 <script>
-    // --- 1. FIREBASE CONFIG (Tuhadi Details) ---
+    // --- 1. CONFIG (PASTE YOUR DETAILS) ---
     const firebaseConfig = {
         apiKey: "AIzaSyBHzvyTGmY2l7o1UaPnq7TvsAVdFTr0SNo",
         authDomain: "harpreet-communications.firebaseapp.com",
@@ -149,138 +151,168 @@
         appId: "1:45127650773:web:8527ac3af958d63a88815c"
     };
 
-    // Firebase Init
     firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-    const dbRef = database.ref('erp_data');
+    const db = firebase.database();
+    
+    let user = null;
+    let isAdmin = false;
+    let currentData = [];
+    let editModeID = null;
 
-    let db = [];
-    let config = JSON.parse(localStorage.getItem('hp_cfg')) || { pass: 'preet786' };
-    let activeCID = null;
-    let ch1 = null, ch2 = null;
+    // --- 2. AUTH & ATTENDANCE ---
+    function handleLogin() {
+        const u = document.getElementById('logUser').value.trim();
+        const p = document.getElementById('logPass').value;
 
-    // LOGIN CHECK
-    function checkLogin() {
-        const val = document.getElementById('loginPass').value;
-        if(val === config.pass) {
-            document.getElementById('login-overlay').style.display = 'none';
-            document.getElementById('main-app').style.display = 'flex';
-            initCloudSync();
-            showPage('home');
-        } else {
-            alert("Galat Password!");
-        }
+        db.ref('users/' + u).once('value', (snap) => {
+            const data = snap.val();
+            if(data && data.password === p) {
+                user = data;
+                isAdmin = (u === 'admin');
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('main-app').style.display = 'flex';
+                document.getElementById('user-name-display').innerText = data.name;
+                if(isAdmin) document.getElementById('admin-only').style.display = 'block';
+                
+                // Mark Attendance
+                const today = new Date().toISOString().split('T')[0];
+                db.ref('attendance/' + u + '/' + today).set(true);
+                
+                initSync();
+            } else alert("Invalid ID or Password!");
+        });
     }
 
-    // CLOUD SYNC
-    function initCloudSync() {
-        dbRef.on('value', (snapshot) => {
-            const data = snapshot.val();
-            db = data ? Object.values(data) : [];
-            console.log("Data Synced from Firebase!");
-            refreshDashboard();
-            if(document.getElementById('all-clients').classList.contains('active')) refreshClientList();
+    // --- 3. CLOUD SYNC ---
+    function initSync() {
+        db.ref('erp_data').on('value', (snapshot) => {
+            const raw = snapshot.val();
+            currentData = raw ? Object.values(raw) : [];
+            refreshUI();
+        });
+        if(isAdmin) fetchStaffReport();
+    }
+
+    function refreshUI() {
+        updateDashboard();
+        if(document.getElementById('all-clients').classList.contains('active')) renderClients();
+    }
+
+    // --- 4. TRANSACTIONS (EDIT & BILLING) ---
+    function saveTransaction() {
+        const s = document.getElementById('tService').value, t = parseFloat(document.getElementById('tTotal').value), p = parseFloat(document.getElementById('tPaid').value) || 0, n = document.getElementById('tNote').value;
+        if(!s || isNaN(t)) return alert("Details bharo!");
+        
+        const tid = editModeID || Date.now().toString();
+        const entry = {
+            id: tid, clientID: activeCID, date: new Date().toLocaleDateString('en-GB'),
+            service: s, total: t, paid: p, bal: t-p, note: n, addedBy: user.name
+        };
+
+        db.ref('erp_data/' + tid).set(entry).then(() => {
+            alert("Cloud Synced!");
+            editModeID = null;
+            ['tService','tTotal','tPaid','tNote'].forEach(id => document.getElementById(id).value = '');
+        });
+    }
+
+    function printBill(tid) {
+        const t = currentData.find(x => x.id == tid);
+        const win = window.open('', '', 'width=600,height=600');
+        win.document.write(`<div class="print-bill"><h2>HARPREET COMMUNICATIONS</h2><p><b>Bill To:</b> ${document.getElementById('pName').innerText}</p><p><b>Service:</b> ${t.service}</p><hr><p>Total: ₹${t.total}</p><p>Paid: ₹${t.paid}</p><h3>Balance: ₹${t.bal}</h3><br><small>Thank You! - Preet Jassi</small></div>`);
+        win.print();
+    }
+
+    function editTrans(tid) {
+        const t = currentData.find(x => x.id == tid);
+        document.getElementById('tService').value = t.service;
+        document.getElementById('tTotal').value = t.total;
+        document.getElementById('tPaid').value = t.paid;
+        document.getElementById('tNote').value = t.note;
+        editModeID = tid;
+    }
+
+    // --- 5. PASSWORD SYNC ---
+    function updateCloudPassword() {
+        const oldP = document.getElementById('oldPass').value;
+        const newP = document.getElementById('newPass').value;
+        const confP = document.getElementById('confirmPass').value;
+
+        if(user.password !== oldP) return alert("Purana Password galat hai!");
+        if(newP !== confP) return alert("Confirm Password match ni hoya!");
+
+        db.ref('users/' + user.username + '/password').set(newP).then(() => {
+            alert("Cloud Password Updated! Sare systems te badal gya.");
+            location.reload();
+        });
+    }
+
+    // --- 6. STAFF & SALARY ---
+    function registerStaff() {
+        const name = document.getElementById('stName').value, uid = document.getElementById('stUser').value, pass = document.getElementById('stPass').value, sal = document.getElementById('stSalary').value;
+        db.ref('users/' + uid).set({ name, username: uid, password: pass, salary: sal }).then(() => alert("Staff Member Added!"));
+    }
+
+    function fetchStaffReport() {
+        db.ref('users').once('value', (snap) => {
+            const uData = snap.val();
+            const body = document.getElementById('staffTable'); body.innerHTML = '';
+            for(let k in uData) {
+                if(k === 'admin') continue;
+                db.ref('attendance/' + k).once('value', (attSnap) => {
+                    const days = attSnap.val() ? Object.keys(attSnap.val()).length : 0;
+                    body.innerHTML += `<tr><td>${uData[k].name}</td><td>${days}</td><td>₹${(uData[k].salary / 30 * days).toFixed(0)}</td></tr>`;
+                });
+            }
+        });
+    }
+
+    // --- COMMON HELPERS ---
+    let activeCID = null;
+    function openProfile(name) {
+        activeCID = name; document.getElementById('pName').innerText = name;
+        const hist = document.getElementById('pHistory'); hist.innerHTML = '';
+        let b = 0;
+        currentData.filter(x => x.clientID === name).forEach(t => {
+            if(!isAdmin && t.addedBy !== user.name) return; // Staff see only their own work
+            b += t.bal;
+            hist.innerHTML += `<tr><td>${t.date}</td><td>${t.service}</td><td>${t.addedBy}</td><td>₹${t.total}</td><td>₹${t.paid}</td><td><button onclick="editTrans('${t.id}')">Edit</button><button onclick="printBill('${t.id}')">Bill</button></td></tr>`;
+        });
+        document.getElementById('pBalance').innerText = "₹" + b;
+        showPage('profile');
+    }
+
+    function renderClients() {
+        const body = document.getElementById('clientBody'); body.innerHTML = '';
+        const uniqueClients = [...new Set(currentData.map(item => item.clientID))];
+        uniqueClients.forEach(c => {
+            const bal = currentData.filter(x => x.clientID === c).reduce((s, t) => s + t.bal, 0);
+            body.innerHTML += `<tr onclick="openProfile('${c}')" style="cursor:pointer"><td>${c}</td><td>-</td><td>₹${bal}</td><td>View</td></tr>`;
         });
     }
 
     function showPage(id) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        if(id === 'home') refreshDashboard();
-        if(id === 'all-clients') refreshClientList();
+        if(id === 'all-clients') renderClients();
     }
-
+    
+    // Add Client as a Transaction
     function addClient() {
-        const n = document.getElementById('ncName').value, p = document.getElementById('ncPhone').value;
-        if(!n || !p) return alert("Details bharo!");
-        const id = Date.now().toString();
-        dbRef.child(id).set({ id, name: n, phone: p, trans: [] });
-        showPage('all-clients');
+        const n = document.getElementById('ncName').value;
+        if(!n) return;
+        activeCID = n;
+        openProfile(n);
     }
-
-    function refreshClientList() {
-        const tb = document.getElementById('fullClientList'); tb.innerHTML = '';
-        db.forEach(c => {
-            const tArr = c.trans ? Object.values(c.trans) : [];
-            let b = tArr.reduce((s,t) => s + (t.bal || 0), 0);
-            tb.innerHTML += `<tr onclick="openProfile('${c.id}')" style="cursor:pointer"><td><b>${c.name}</b></td><td>${c.phone}</td><td style="color:red; font-weight:bold">₹${b}</td></tr>`;
-        });
-    }
-
-    function openProfile(id) {
-        activeCID = id; const c = db.find(x => x.id === id);
-        document.getElementById('pName').innerText = c.name;
-        document.getElementById('pPhone').innerText = "Mobile: " + c.phone;
-        renderHistory(); showPage('profile');
-    }
-
-    function addTransaction() {
-        const s = document.getElementById('tService').value, t = parseFloat(document.getElementById('tTotal').value), p = parseFloat(document.getElementById('tPaid').value) || 0, n = document.getElementById('tNote').value;
-        if(!s || isNaN(t)) return alert("Details bharo!");
-        const tid = Date.now().toString();
-        dbRef.child(activeCID).child('trans').child(tid).set({
-            id: tid, date: new Date().toLocaleDateString('en-GB'), service: s, total: t, paid: p, bal: t-p, note: n
-        });
-        ['tService','tTotal','tPaid','tNote'].forEach(id => document.getElementById(id).value = '');
-    }
-
-    function renderHistory() {
-        const c = db.find(x => x.id === activeCID), body = document.getElementById('pHistoryBody');
-        body.innerHTML = ''; let bal = 0;
-        const tArr = c.trans ? Object.values(c.trans).reverse() : [];
-        tArr.forEach(t => {
-            bal += t.bal;
-            body.innerHTML += `<tr><td>${t.date}</td><td><b>${t.service}</b><br><small>${t.note || ''}</small></td><td>₹${t.total}</td><td>₹${t.paid}</td><td style="color:red">₹${t.bal}</td><td><i class="fa fa-trash" style="color:red" onclick="deleteEntry('${t.id}')"></i></td></tr>`;
-        });
-        document.getElementById('pBalance').innerText = "₹" + bal;
-    }
-
-    function deleteEntry(tid) {
-        if(confirm("Delete koshish?")) dbRef.child(activeCID).child('trans').child(tid).remove();
-    }
-
-    function refreshDashboard() {
-        let rev=0, rec=0, pend=0, services={};
-        db.forEach(c => {
-            const tArr = c.trans ? Object.values(c.trans) : [];
-            tArr.forEach(t => { 
-                rev += t.total; rec += t.paid; pend += t.bal;
-                services[t.service] = (services[t.service] || 0) + 1;
-            });
-        });
+    
+    // Simple Dashboard logic
+    function updateDashboard() {
+        let rev=0, rec=0, pend=0;
+        currentData.forEach(t => { rev += t.total; rec += t.paid; pend += t.bal; });
         document.getElementById('d-rev').innerText = "₹" + rev;
         document.getElementById('d-rec').innerText = "₹" + rec;
         document.getElementById('d-pend').innerText = "₹" + pend;
-        document.getElementById('d-clients').innerText = db.length;
-
-        if(ch1) ch1.destroy(); if(ch2) ch2.destroy();
-        ch1 = new Chart(document.getElementById('payChart'), { type:'doughnut', data:{ labels:['Rec','Pend'], datasets:[{data:[rec, pend], backgroundColor:['#05c46b','#ff3f34']}] }, options:{maintainAspectRatio:false} });
-        ch2 = new Chart(document.getElementById('workChart'), { type:'bar', data:{ labels:Object.keys(services), datasets:[{label:'Services', data:Object.values(services), backgroundColor:'#3498db'}] }, options:{maintainAspectRatio:false} });
-    }
-
-    function savePass() { config.pass = document.getElementById('newPass').value; localStorage.setItem('hp_cfg', JSON.stringify(config)); alert("Updated!"); }
-    
-    function exportData() {
-        let rows = []; db.forEach(c => {
-            const tArr = c.trans ? Object.values(c.trans) : [];
-            tArr.forEach(t => rows.push({ Name: c.name, Phone: c.phone, Date: t.date, Service: t.service, Total: t.total, Paid: t.paid, Balance: t.bal }));
-        });
-        const ws = XLSX.utils.json_to_sheet(rows), wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Backup"); XLSX.writeFile(wb, "Harpreet_Backup.xlsx");
-    }
-
-    function searchClients() {
-        const q = document.getElementById('gSearch').value.toLowerCase();
-        if(q) { 
-            showPage('all-clients'); 
-            const tb = document.getElementById('fullClientList'); tb.innerHTML = '';
-            db.filter(c => c.name.toLowerCase().includes(q) || c.phone.includes(q)).forEach(c => {
-                const tArr = c.trans ? Object.values(c.trans) : [];
-                let b = tArr.reduce((s,t) => s + (t.bal || 0), 0);
-                tb.innerHTML += `<tr onclick="openProfile('${c.id}')"><td><b>${c.name}</b></td><td>${c.phone}</td><td style="color:red">₹${b}</td></tr>`;
-            });
-        }
+        document.getElementById('d-cl').innerText = [...new Set(currentData.map(item => item.clientID))].length;
     }
 </script>
 </body>
