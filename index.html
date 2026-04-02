@@ -2,7 +2,7 @@
 <html lang="pa">
 <head>
     <meta charset="UTF-8">
-    <title>Harpreet Communications - Cloud ERP</title>
+    <title>Harpreet Communications</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        :root { --sidebar-w: 240px; --primary: #1e272e; --accent: #3498db; --success: #05c46b; --danger: #ff3f34; --bg: #f1f2f6; }
+        :root { --sidebar-w: 240px; --primary: #1e272e; --accent: #3498db; --success: #05c46b; --danger: #ff3f34; --bg: #f1f2f6; --whatsapp: #25D366; }
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background: var(--bg); overflow: hidden; }
         .wrapper { display: flex; height: 100vh; width: 100vw; }
         .sidebar { width: var(--sidebar-w); background: var(--primary); color: white; display: flex; flex-direction: column; flex-shrink: 0; }
@@ -37,7 +37,7 @@
 
     <div id="login-overlay">
         <div class="login-box">
-            <h2 style="color:var(--primary)">HARPREET COMM.</h2>
+            <h2 style="color:var(--primary)">HARPREET COMMUNCATIONS</h2>
             <input type="text" id="logUser" class="input-field" placeholder="Username">
             <input type="password" id="logPass" class="input-field" placeholder="Password" onkeypress="if(event.key==='Enter')handleLogin()">
             <button class="btn" style="background:var(--accent); color:white; width:100%" onclick="handleLogin()">Login to ERP</button>
@@ -104,7 +104,7 @@
                     <div class="box" style="max-width:500px; margin:auto;">
                         <h2>Open New Account</h2>
                         <input type="text" id="ncName" class="input-field" placeholder="Client Name">
-                        <input type="text" id="ncPhone" class="input-field" placeholder="Mobile Number (Optional)">
+                        <input type="text" id="ncPhone" class="input-field" placeholder="Mobile Number (e.g. 9876543210)">
                         <button class="btn" style="background:var(--success); color:white; width:100%" onclick="addClient()">Create Account</button>
                     </div>
                 </div>
@@ -174,7 +174,7 @@
     </div>
 
 <script>
-    // --- FIREBASE CONFIG (Tuhadi API) ---
+    // --- FIREBASE CONFIG ---
     const firebaseConfig = {
         apiKey: "AIzaSyBHzvyTGmY2l7o1UaPnq7TvsAVdFTr0SNo",
         authDomain: "harpreet-communications.firebaseapp.com",
@@ -274,12 +274,10 @@
         const body = document.getElementById('clientBody');
         let clientMap = {};
 
-        // Load new clients
         clientsList.forEach(c => {
             if(c && c.id) clientMap[c.id] = { id: c.id, name: c.name || c.id, phone: c.phone || "-", bal: 0 };
         });
 
-        // Load legacy clients from transactions
         erpData.forEach(t => {
             if(t && t.clientID) {
                 if(!isAdmin && t.addedByUID !== loggedUser.username && t.service !== "Account Opened") return;
@@ -298,7 +296,6 @@
         body.innerHTML = '';
         uniqueClients.forEach(cid => {
             const c = clientMap[cid];
-            // Format name securely for HTML
             const safeName = c.name.replace(/'/g, "\\'"); 
             body.innerHTML += `<tr onclick="openProfile('${cid}', '${safeName}')" style="cursor:pointer; transition:0.2s;" onmouseover="this.style.background='#f1f2f6'" onmouseout="this.style.background='transparent'">
                 <td><b>${c.name}</b><br><small style="color:#666">${c.phone}</small></td>
@@ -308,10 +305,8 @@
         });
     }
 
-    // --- FIX: OPEN PROFILE WITH BOTH ID AND NAME ---
     function openProfile(cid, cname) {
         activeCID = cid;
-        // Fix the heading to show real name instead of timestamp ID
         document.getElementById('pName').innerText = cname || cid; 
         renderHistory();
         showPage('profile');
@@ -351,12 +346,39 @@
             editModeTID = tid; 
             const sBtn = document.getElementById('saveBtn');
             sBtn.innerText = "Update Entry";
-            sBtn.style.background = "#f39c12"; // Orange to indicate edit mode
+            sBtn.style.background = "#f39c12";
             window.scrollTo(0,0);
         }
     }
 
-    // --- FIX: SMART MATCH FOR HISTORY ---
+    // --- NEW: WHATSAPP FUNCTION ---
+    function sendWhatsApp(tid) {
+        const t = erpData.find(x => x.id === tid);
+        if(!t) return;
+
+        // Try to find the client's phone number
+        let phoneNum = "";
+        let cName = document.getElementById('pName').innerText;
+        
+        const clientObj = clientsList.find(c => c.id === activeCID || c.name === activeCID);
+        if(clientObj && clientObj.phone && clientObj.phone !== "N/A" && clientObj.phone !== "-") {
+            phoneNum = clientObj.phone.replace(/\D/g, ''); // Extract only numbers
+        } else {
+            // Try to extract from activeCID if it has format Name (Phone)
+            const match = activeCID.match(/\(([^)]+)\)/);
+            if(match) phoneNum = match[1].replace(/\D/g, '');
+        }
+
+        if(phoneNum.length === 10) phoneNum = "91" + phoneNum; // Add India code if 10 digits
+        
+        let message = `Sat Sri Akal ${cName} ji,\n\nTuhadi entry *${t.service}* layi Harpreet Communications vich save ho gayi hai.\n\n*Total Fees:* ₹${t.total}\n*Paid:* ₹${t.paid}\n*Pending Balance:* ₹${t.bal}\n\nThanks & Regards,\n*Harpreet Communications*\nShop No. 3, Anoop Nagar, Gakhal Road, Basti Danishmandan, Jalandhar\nPh: +91-8847593813`;
+        
+        let encodedMsg = encodeURIComponent(message);
+        let waUrl = phoneNum ? `https://wa.me/${phoneNum}?text=${encodedMsg}` : `https://api.whatsapp.com/send?text=${encodedMsg}`;
+        
+        window.open(waUrl, '_blank');
+    }
+
     function renderHistory() {
         const body = document.getElementById('pHistory'); body.innerHTML = ''; let bal = 0;
         const clientDisplayName = document.getElementById('pName').innerText;
@@ -364,10 +386,7 @@
         let hasEntries = false;
 
         erpData.forEach(t => {
-            // Check if entry belongs to this client (matches ID OR Name)
             if(t.clientID === activeCID || t.clientID === clientDisplayName) {
-                
-                // Staff permissions filter
                 if(!isAdmin && t.addedByUID !== loggedUser.username && t.service !== "Account Opened") return;
                 
                 hasEntries = true;
@@ -376,7 +395,17 @@
                 if(t.service === "Account Opened") {
                     body.innerHTML += `<tr style="background:#f9f9f9; color:#888;"><td>${t.date}</td><td><b>Account Setup</b></td><td>${t.addedBy}</td><td>-</td><td>-</td><td>-</td></tr>`;
                 } else {
-                    body.innerHTML += `<tr><td>${t.date}</td><td>${t.service}</td><td>${t.addedBy}</td><td>₹${t.total}</td><td>₹${t.paid}</td><td><button class="btn" style="background:#f39c12; color:white; padding:5px 10px;" onclick="editEntry('${t.id}')"><i class="fa fa-pen"></i> Edit</button></td></tr>`;
+                    body.innerHTML += `<tr>
+                        <td>${t.date}</td>
+                        <td>${t.service}</td>
+                        <td>${t.addedBy}</td>
+                        <td>₹${t.total}</td>
+                        <td>₹${t.paid}</td>
+                        <td>
+                            <button class="btn" style="background:#f39c12; color:white; padding:5px 10px; margin-right:5px;" onclick="editEntry('${t.id}')" title="Edit Entry"><i class="fa fa-pen"></i></button>
+                            <button class="btn" style="background:var(--whatsapp); color:white; padding:5px 10px;" onclick="sendWhatsApp('${t.id}')" title="Send WhatsApp Receipt"><i class="fab fa-whatsapp"></i></button>
+                        </td>
+                    </tr>`;
                 }
             }
         });
@@ -384,7 +413,6 @@
         if(!hasEntries) {
             body.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px; color:#888;">No transactions found for this client.</td></tr>`;
         }
-
         document.getElementById('pBalance').innerText = "Pending Balance: ₹" + bal;
     }
 
@@ -395,9 +423,7 @@
         const myData = isAdmin ? erpData : erpData.filter(d => d.addedByUID === loggedUser.username);
         
         myData.forEach(t => { 
-            rev += (t.total || 0); 
-            rec += (t.paid || 0); 
-            pend += (t.bal || 0); 
+            rev += (t.total || 0); rec += (t.paid || 0); pend += (t.bal || 0); 
             if(t.service && t.service !== "Account Opened") { servicesCount[t.service] = (servicesCount[t.service] || 0) + 1; }
         });
 
@@ -413,12 +439,9 @@
     }
 
     function drawCharts(received, pending, servicesData) {
-        if(ch1) ch1.destroy();
-        if(ch2) ch2.destroy();
-
+        if(ch1) ch1.destroy(); if(ch2) ch2.destroy();
         const ctx1 = document.getElementById('payChart').getContext('2d');
         ch1 = new Chart(ctx1, { type: 'doughnut', data: { labels: ['Received (₹)', 'Pending (₹)'], datasets: [{ data: [received, pending], backgroundColor: ['#05c46b', '#ff3f34'] }] }, options: { maintainAspectRatio: false } });
-
         const ctx2 = document.getElementById('workChart').getContext('2d');
         ch2 = new Chart(ctx2, { type: 'bar', data: { labels: Object.keys(servicesData), datasets: [{ label: 'Applications', data: Object.values(servicesData), backgroundColor: '#3498db' }] }, options: { maintainAspectRatio: false } });
     }
