@@ -2,7 +2,7 @@
 <html lang="pa">
 <head>
     <meta charset="UTF-8">
-    <title>Harpreet Communications</title>
+    <title>Harpreet Communications - Cloud ERP</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -32,7 +32,7 @@
 
     <div id="login-overlay">
         <div class="login-box">
-            <h2 style="color:var(--primary)">HARPREET COMMUNICATIONS</h2>
+            <h2 style="color:var(--primary)">HARPREET COMM.</h2>
             <input type="text" id="logUser" class="input-field" placeholder="Username">
             <input type="password" id="logPass" class="input-field" placeholder="Password" onkeypress="if(event.key==='Enter')handleLogin()">
             <button class="btn" style="background:var(--accent); color:white; width:100%" onclick="handleLogin()">Login to ERP</button>
@@ -75,7 +75,7 @@
                         <h2>Client Directory</h2>
                         <input type="text" class="input-field" placeholder="Search Client Name..." onkeyup="filterClients(this.value)">
                         <table>
-                            <thead><tr><th>Client Name & Phone</th><th>Your Pending Balance</th><th>Action</th></tr></thead>
+                            <thead><tr><th>Client Name & Phone</th><th>Pending Balance</th><th>Action</th></tr></thead>
                             <tbody id="clientBody"></tbody>
                         </table>
                     </div>
@@ -166,6 +166,7 @@
     let loggedUser = null;
     let isAdmin = false;
     let erpData = [];
+    let clientsList = [];
     let activeCID = null;
     let editModeTID = null;
 
@@ -188,8 +189,15 @@
         });
     }
 
-    // --- SINGLE SYNC METHOD ---
+    // --- DUAL SYNC METHOD (Reads Both Folders) ---
     function initCloudSync() {
+        // Purane clients read karo
+        db.ref('clients').on('value', snap => {
+            clientsList = snap.val() ? Object.values(snap.val()) : [];
+            if(document.getElementById('all-clients').classList.contains('active')) renderClients();
+        });
+
+        // Sari entries read karo
         db.ref('erp_data').on('value', snap => {
             erpData = snap.val() ? Object.values(snap.val()) : [];
             updateStats();
@@ -210,18 +218,21 @@
         }
     }
 
-    // --- ADD CLIENT (ACCOUNT OPENED TRICK) ---
+    // --- DOUBLE SAVE: Save client name to BOTH places ---
     function addClient() {
         const n = document.getElementById('ncName').value.trim();
         const p = document.getElementById('ncPhone').value.trim();
         if(!n) return alert("Client Name is required!");
         
-        // Combine Name and Phone for Unique Identity
         const cid = p ? `${n} (${p})` : n;
         const tid = Date.now().toString();
         const uName = loggedUser ? (loggedUser.name || "Admin") : "Admin";
         const uID = loggedUser ? (loggedUser.username || "admin") : "admin";
 
+        // Save to clients list (To show name permanently)
+        db.ref('clients/' + Date.now()).set({ id: cid, name: cid, phone: p });
+
+        // Save Account Opened Entry
         const entry = { 
             id: tid, clientID: cid, date: new Date().toLocaleDateString('en-GB'), 
             service: "Account Opened", total: 0, paid: 0, bal: 0, note: "Account Setup", 
@@ -231,17 +242,20 @@
         db.ref('erp_data/' + tid).set(entry).then(() => {
             document.getElementById('ncName').value = '';
             document.getElementById('ncPhone').value = '';
-            openProfile(cid);
+            openProfile(cid); // Sidha profile khul jayegi
         });
     }
 
-    // --- RENDER CLIENTS (EVERYONE SEES ALL CLIENTS) ---
+    // --- RENDER CLIENTS (Merge Purana + Nawa Data) ---
     function renderClients() {
         const body = document.getElementById('clientBody'); body.innerHTML = '';
-        const uniqueClients = [...new Set(erpData.map(d => d.clientID))].filter(Boolean); // Get all unique names
+        
+        // Combine clients from both lists so NOTHING is missed
+        let transClients = erpData.map(d => d.clientID);
+        let savedClients = clientsList.map(c => c.name);
+        const uniqueClients = [...new Set([...transClients, ...savedClients])].filter(Boolean);
         
         uniqueClients.forEach(c => {
-            // Calculate Balance based on what user is allowed to see
             let myEntries = erpData.filter(d => d.clientID === c);
             if(!isAdmin) {
                 myEntries = myEntries.filter(d => d.addedByUID === loggedUser.username);
@@ -303,19 +317,16 @@
     function renderHistory() {
         const body = document.getElementById('pHistory'); body.innerHTML = ''; let bal = 0;
         erpData.filter(d => d.clientID === activeCID).forEach(t => {
-            // Sub-user only sees own entries
             if(!isAdmin && t.addedByUID !== loggedUser.username) return;
-            
             bal += (t.bal || 0);
             
-            // Highlight Account Opened
             if(t.service === "Account Opened") {
-                body.innerHTML += `<tr style="background:#f9f9f9"><td>${t.date}</td><td><b>${t.service}</b></td><td>${t.addedBy}</td><td>-</td><td>-</td><td>-</td></tr>`;
+                body.innerHTML += `<tr style="background:#f9f9f9; color:#888;"><td>${t.date}</td><td><b>Account Setup</b></td><td>${t.addedBy}</td><td>-</td><td>-</td><td>-</td></tr>`;
             } else {
                 body.innerHTML += `<tr><td>${t.date}</td><td>${t.service}</td><td>${t.addedBy}</td><td>₹${t.total}</td><td>₹${t.paid}</td><td><button class="btn" style="background:orange; color:white; padding:5px 10px;" onclick="editEntry('${t.id}')">Edit</button></td></tr>`;
             }
         });
-        document.getElementById('pBalance').innerText = "Pending: ₹" + bal;
+        document.getElementById('pBalance').innerText = "Pending Balance: ₹" + bal;
     }
 
     function filterClients(q) {
@@ -328,14 +339,16 @@
 
     function updateStats() {
         let rev=0, rec=0, pend=0;
-        // Sub-user only sees stats for their own entries, Admin sees all
         const myData = isAdmin ? erpData : erpData.filter(d => d.addedByUID === loggedUser.username);
         
         myData.forEach(t => { rev += (t.total || 0); rec += (t.paid || 0); pend += (t.bal || 0); });
         document.getElementById('d-rev').innerText = "₹" + rev;
         document.getElementById('d-rec').innerText = "₹" + rec;
         document.getElementById('d-pend').innerText = "₹" + pend;
-        document.getElementById('d-cl').innerText = [...new Set(erpData.map(d => d.clientID))].filter(Boolean).length;
+        
+        let transClients = myData.map(d => d.clientID);
+        let savedClients = clientsList.map(c => c.name);
+        document.getElementById('d-cl').innerText = [...new Set([...transClients, ...savedClients])].filter(Boolean).length;
     }
 
     function showPage(id) {
@@ -362,8 +375,8 @@
             db.ref('attendance/' + uid).once('value', attSnap => {
                 const days = attSnap.val() ? Object.keys(attSnap.val()).length : 0;
                 const calSalary = (u.salary / 30) * days;
-                document.getElementById('sdSalary').innerText = "Salary calculation (" + days + " Days): ₹" + calSalary.toFixed(0);
-                document.getElementById('sdSummary').innerHTML = `<p>Total Entries: <b>${erpData.filter(t => t.addedByUID === uid && t.service !== "Account Opened").length}</b></p>`;
+                document.getElementById('sdSalary').innerText = "Salary (" + days + " Days): ₹" + calSalary.toFixed(0);
+                document.getElementById('sdSummary').innerHTML = `<p>Entries Done: <b>${erpData.filter(t => t.addedByUID === uid && t.service !== "Account Opened").length}</b></p>`;
             });
             showPage('staff-detail-page');
         });
