@@ -76,8 +76,11 @@
                         <input type="text" class="input-field" placeholder="Search Client Name..." onkeyup="filterClients(this.value)">
                         <table>
                             <thead><tr><th>Client Name & Phone</th><th>Pending Balance</th><th>Action</th></tr></thead>
-                            <tbody id="clientBody"></tbody>
+                            <tbody id="clientBody">
+                                <tr><td colspan="3" style="text-align:center; color:#888;">Fetching Clients... (Agar ehi dikh reha hai taan refresh karo)</td></tr>
+                            </tbody>
                         </table>
+                        <p id="error-log" style="color:red; font-size:12px;"></p>
                     </div>
                 </div>
 
@@ -149,7 +152,6 @@
     </div>
 
 <script>
-    // --- FIREBASE CONFIG (EH ZAROORI BHARO) ---
     const firebaseConfig = {
         apiKey: "AIzaSyBHzvyTGmY2l7o1UaPnq7TvsAVdFTr0SNo",
         authDomain: "harpreet-communications.firebaseapp.com",
@@ -189,15 +191,21 @@
         });
     }
 
-    // --- BULLETPROOF SYNC METHOD ---
+    // NATIVE FIREBASE FOREACH METHOD (100% CRASH PROOF)
     function initCloudSync() {
         db.ref('clients').on('value', snap => {
-            clientsList = snap.val() ? Object.values(snap.val()) : [];
+            clientsList = [];
+            if(snap.exists()) {
+                snap.forEach(child => { clientsList.push(child.val()); });
+            }
             if(document.getElementById('all-clients').classList.contains('active')) renderClients();
         });
 
         db.ref('erp_data').on('value', snap => {
-            erpData = snap.val() ? Object.values(snap.val()) : [];
+            erpData = [];
+            if(snap.exists()) {
+                snap.forEach(child => { erpData.push(child.val()); });
+            }
             updateStats();
             if(document.getElementById('all-clients').classList.contains('active')) renderClients();
             if(document.getElementById('profile').classList.contains('active')) renderHistory();
@@ -205,34 +213,33 @@
 
         if(isAdmin) {
             db.ref('users').on('value', snap => {
-                const users = snap.val();
-                const body = document.getElementById('staffListTable'); body.innerHTML = '';
-                for(let key in users) {
-                    if(key !== 'admin') {
-                        body.innerHTML += `<tr><td>${users[key].name}</td><td>${key}</td><td><span style="color:red; font-weight:bold">${users[key].password}</span></td><td><button class="btn" style="background:var(--accent); color:white; padding:5px 10px;" onclick="viewStaffDetail('${key}')">View</button></td></tr>`;
-                    }
+                const users = [];
+                if(snap.exists()) {
+                    snap.forEach(child => { users.push({key: child.key, ...child.val()}); });
                 }
+                const body = document.getElementById('staffListTable'); body.innerHTML = '';
+                users.forEach(u => {
+                    if(u.key !== 'admin') {
+                        body.innerHTML += `<tr><td>${u.name}</td><td>${u.key}</td><td><span style="color:red; font-weight:bold">${u.password}</span></td><td><button class="btn" style="background:var(--accent); color:white; padding:5px 10px;" onclick="viewStaffDetail('${u.key}')">View</button></td></tr>`;
+                    }
+                });
             });
         }
     }
 
-    // --- ADD CLIENT (Safe Save) ---
     function addClient() {
         try {
             const n = document.getElementById('ncName').value.trim();
             const p = document.getElementById('ncPhone').value.trim();
             if(!n) return alert("Client Name is required!");
             
-            // Format name safely
             const cid = p ? `${n} (${p})` : n;
             const tid = Date.now().toString();
             const uName = loggedUser ? (loggedUser.name || "Admin") : "Admin";
             const uID = loggedUser ? (loggedUser.username || "admin") : "admin";
 
-            // Save Client Detail (Date.now() as safe key)
             db.ref('clients/' + Date.now()).set({ id: cid, name: n, phone: p || "N/A" });
 
-            // Save First Dummy Entry
             const entry = { 
                 id: tid, clientID: cid, date: new Date().toLocaleDateString('en-GB'), 
                 service: "Account Opened", total: 0, paid: 0, bal: 0, note: "Account Setup", 
@@ -242,34 +249,28 @@
             db.ref('erp_data/' + tid).set(entry).then(() => {
                 document.getElementById('ncName').value = '';
                 document.getElementById('ncPhone').value = '';
-                openProfile(cid); // Jump to profile immediately
+                openProfile(cid); 
             });
         } catch(err) {
-            console.error(err);
-            alert("Error adding client. Please check details.");
+            alert("Error: " + err.message);
         }
     }
 
-    // --- RENDER CLIENTS (Auto-Repair & Error Free) ---
     function renderClients() {
         const body = document.getElementById('clientBody');
-        body.innerHTML = '';
+        const errLog = document.getElementById('error-log');
+        errLog.innerText = "";
         
         try {
-            // Merge both lists safely using a Dictionary Map
             let clientMap = {};
 
-            // Load from Clients list
             clientsList.forEach(c => {
                 if(c && c.id) clientMap[c.id] = { id: c.id, name: c.name || c.id, phone: c.phone || "-", bal: 0 };
             });
 
-            // Load from Transactions (Catches legacy/old data)
             erpData.forEach(t => {
                 if(t && t.clientID) {
-                    // Filter for Staff (Staff sees only clients they worked on or we can show all)
                     if(!isAdmin && t.addedByUID !== loggedUser.username && t.service !== "Account Opened") return;
-                    
                     if(!clientMap[t.clientID]) {
                         clientMap[t.clientID] = { id: t.clientID, name: t.clientID, phone: "-", bal: 0 };
                     }
@@ -279,13 +280,12 @@
 
             const uniqueClients = Object.keys(clientMap);
 
-            // Empty State Check
             if(uniqueClients.length === 0) {
-                body.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px; color:#888;">Hale tak koi client add nahi hoya. "Add Client" te click karo!</td></tr>';
+                body.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px; font-weight:bold; color:var(--danger);">Database ch koi client nahi hai. "Add Client" te ja ke nawa client pao!</td></tr>';
                 return;
             }
 
-            // Draw the table
+            body.innerHTML = '';
             uniqueClients.forEach(cid => {
                 const c = clientMap[cid];
                 body.innerHTML += `<tr onclick="openProfile('${cid}')" style="cursor:pointer; transition:0.2s;" onmouseover="this.style.background='#f1f2f6'" onmouseout="this.style.background='transparent'">
@@ -295,8 +295,7 @@
                 </tr>`;
             });
         } catch(err) {
-            console.error(err);
-            body.innerHTML = '<tr><td colspan="3" style="color:red; text-align:center;">List load karan vich error aayi hai.</td></tr>';
+            errLog.innerText = "CRASH ERROR: " + err.message;
         }
     }
 
@@ -307,7 +306,6 @@
         showPage('profile');
     }
 
-    // --- SAVE TRANSACTION ---
     function saveTransaction() {
         const s = document.getElementById('tService').value || "Service";
         const t = parseFloat(document.getElementById('tTotal').value) || 0;
@@ -348,7 +346,6 @@
         const body = document.getElementById('pHistory'); body.innerHTML = ''; let bal = 0;
         erpData.filter(d => d.clientID === activeCID).forEach(t => {
             if(!isAdmin && t.addedByUID !== loggedUser.username && t.service !== "Account Opened") return;
-            
             bal += (t.bal || 0);
             
             if(t.service === "Account Opened") {
@@ -371,7 +368,6 @@
     function updateStats() {
         let rev=0, rec=0, pend=0;
         const myData = isAdmin ? erpData : erpData.filter(d => d.addedByUID === loggedUser.username);
-        
         myData.forEach(t => { rev += (t.total || 0); rec += (t.paid || 0); pend += (t.bal || 0); });
         document.getElementById('d-rev').innerText = "₹" + rev;
         document.getElementById('d-rec').innerText = "₹" + rec;
@@ -386,6 +382,7 @@
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById(id).classList.add('active');
+        if(id === 'all-clients') renderClients();
     }
 
     function registerStaff() {
