@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Harpreet Communications - Cloud ERP</title>
-    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -27,7 +26,8 @@
         th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
         .input-field { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; outline:none; }
         .input-field:focus { border-color: var(--accent); }
-        .btn { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn:active { transform: scale(0.95); }
         #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); z-index: 10000; display: flex; justify-content: center; align-items: center; }
         .login-box { background: white; padding: 30px; border-radius: 15px; width: 320px; text-align: center; }
         canvas { max-height: 250px !important; }
@@ -51,9 +51,7 @@
                 <div class="nav-item active" onclick="showPage('home')"><i class="fa fa-home"></i> Dashboard</div>
                 <div class="nav-item" onclick="showPage('all-clients')"><i class="fa fa-users"></i> All Accounts</div>
                 <div class="nav-item" onclick="showPage('add-client')"><i class="fa fa-user-plus"></i> Add Client</div>
-                
                 <div class="nav-item" onclick="exportData()"><i class="fa fa-file-excel"></i> Download Excel</div>
-                
                 <div id="admin-only" style="display:none;">
                     <div class="nav-item" onclick="showPage('staff-mgmt')"><i class="fa fa-user-tie"></i> Staff Management</div>
                 </div>
@@ -77,7 +75,6 @@
                         <div><h2 id="d-pend" style="color:var(--danger)">₹0</h2><small>Pending</small></div>
                         <div><h2 id="d-cl">0</h2><small>Total Clients</small></div>
                     </div>
-                    
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
                         <div class="box">
                             <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:10px;">Payment Overview</h3>
@@ -100,7 +97,6 @@
                                 <tr><td colspan="3" style="text-align:center; color:#888;">Fetching Clients...</td></tr>
                             </tbody>
                         </table>
-                        <p id="error-log" style="color:red; font-size:12px;"></p>
                     </div>
                 </div>
 
@@ -114,11 +110,12 @@
                 </div>
 
                 <div id="profile" class="page">
-                    <button class="btn" onclick="showPage('all-clients')" style="background:#888; color:white; margin-bottom:10px;">← Back to List</button>
-                    <div class="box">
-                        <h2 id="pName">Name</h2>
-                        <h3 id="pBalance" style="color:var(--danger)">₹0</h3>
-                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+                    <button class="btn" onclick="showPage('all-clients')" style="background:#888; color:white; margin-bottom:10px;"><i class="fa fa-arrow-left"></i> Back to List</button>
+                    <div class="box" style="border-left: 5px solid var(--accent);">
+                        <h2 id="pName" style="margin-top:0;">Client Name</h2>
+                        <h3 id="pBalance" style="color:var(--danger)">Pending Balance: ₹0</h3>
+                        
+                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-top:15px;">
                             <input type="text" id="tService" class="input-field" placeholder="Service Name">
                             <input type="number" id="tTotal" class="input-field" placeholder="Total Fees">
                             <input type="number" id="tPaid" class="input-field" placeholder="Paid Now">
@@ -126,8 +123,13 @@
                         <textarea id="tNote" class="input-field" placeholder="Important Notes..."></textarea>
                         <button class="btn" id="saveBtn" style="background:var(--success); color:white" onclick="saveTransaction()">Save Entry</button>
                     </div>
+                    
                     <div class="box">
-                        <table><thead><tr><th>Date</th><th>Service</th><th>Staff</th><th>Total</th><th>Paid</th><th>Action</th></tr></thead><tbody id="pHistory"></tbody></table>
+                        <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:10px;">Transaction History</h3>
+                        <table>
+                            <thead><tr><th>Date</th><th>Service</th><th>Staff</th><th>Total</th><th>Paid</th><th>Action</th></tr></thead>
+                            <tbody id="pHistory"></tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -172,7 +174,7 @@
     </div>
 
 <script>
-    // --- FIREBASE CONFIG (Tuhadi API Details) ---
+    // --- FIREBASE CONFIG (Tuhadi API) ---
     const firebaseConfig = {
         apiKey: "AIzaSyBHzvyTGmY2l7o1UaPnq7TvsAVdFTr0SNo",
         authDomain: "harpreet-communications.firebaseapp.com",
@@ -192,8 +194,8 @@
     let clientsList = [];
     let activeCID = null;
     let editModeTID = null;
-    let ch1 = null; // Payment Chart
-    let ch2 = null; // Service Chart
+    let ch1 = null; 
+    let ch2 = null; 
 
     function handleLogin() {
         const u = document.getElementById('logUser').value.trim();
@@ -244,71 +246,73 @@
     }
 
     function addClient() {
-        try {
-            const n = document.getElementById('ncName').value.trim();
-            const p = document.getElementById('ncPhone').value.trim();
-            if(!n) return alert("Client Name is required!");
-            
-            const cid = p ? `${n} (${p})` : n;
-            const tid = Date.now().toString();
-            const uName = loggedUser ? (loggedUser.name || "Admin") : "Admin";
-            const uID = loggedUser ? (loggedUser.username || "admin") : "admin";
+        const n = document.getElementById('ncName').value.trim();
+        const p = document.getElementById('ncPhone').value.trim();
+        if(!n) return alert("Client Name is required!");
+        
+        const cid = p ? `${n} (${p})` : n;
+        const tid = Date.now().toString();
+        const uName = loggedUser ? (loggedUser.name || "Admin") : "Admin";
+        const uID = loggedUser ? (loggedUser.username || "admin") : "admin";
 
-            db.ref('clients/' + Date.now()).set({ id: cid, name: n, phone: p || "N/A" });
+        db.ref('clients/' + Date.now()).set({ id: cid, name: n, phone: p || "N/A" });
 
-            const entry = { 
-                id: tid, clientID: cid, date: new Date().toLocaleDateString('en-GB'), 
-                service: "Account Opened", total: 0, paid: 0, bal: 0, note: "Account Setup", 
-                addedBy: uName, addedByUID: uID 
-            };
+        const entry = { 
+            id: tid, clientID: cid, date: new Date().toLocaleDateString('en-GB'), 
+            service: "Account Opened", total: 0, paid: 0, bal: 0, note: "Account Setup", 
+            addedBy: uName, addedByUID: uID 
+        };
 
-            db.ref('erp_data/' + tid).set(entry).then(() => {
-                document.getElementById('ncName').value = '';
-                document.getElementById('ncPhone').value = '';
-                openProfile(cid); 
-            });
-        } catch(err) { alert("Error: " + err.message); }
+        db.ref('erp_data/' + tid).set(entry).then(() => {
+            document.getElementById('ncName').value = '';
+            document.getElementById('ncPhone').value = '';
+            openProfile(cid, n); 
+        });
     }
 
     function renderClients() {
         const body = document.getElementById('clientBody');
-        try {
-            let clientMap = {};
+        let clientMap = {};
 
-            clientsList.forEach(c => {
-                if(c && c.id) clientMap[c.id] = { id: c.id, name: c.name || c.id, phone: c.phone || "-", bal: 0 };
-            });
+        // Load new clients
+        clientsList.forEach(c => {
+            if(c && c.id) clientMap[c.id] = { id: c.id, name: c.name || c.id, phone: c.phone || "-", bal: 0 };
+        });
 
-            erpData.forEach(t => {
-                if(t && t.clientID) {
-                    if(!isAdmin && t.addedByUID !== loggedUser.username && t.service !== "Account Opened") return;
-                    if(!clientMap[t.clientID]) { clientMap[t.clientID] = { id: t.clientID, name: t.clientID, phone: "-", bal: 0 }; }
-                    clientMap[t.clientID].bal += (parseFloat(t.bal) || 0);
-                }
-            });
-
-            const uniqueClients = Object.keys(clientMap);
-
-            if(uniqueClients.length === 0) {
-                body.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px; color:red;">Database khali hai. "Add Client" te ja ke entry pao.</td></tr>';
-                return;
+        // Load legacy clients from transactions
+        erpData.forEach(t => {
+            if(t && t.clientID) {
+                if(!isAdmin && t.addedByUID !== loggedUser.username && t.service !== "Account Opened") return;
+                if(!clientMap[t.clientID]) { clientMap[t.clientID] = { id: t.clientID, name: t.clientID, phone: "-", bal: 0 }; }
+                clientMap[t.clientID].bal += (parseFloat(t.bal) || 0);
             }
+        });
 
-            body.innerHTML = '';
-            uniqueClients.forEach(cid => {
-                const c = clientMap[cid];
-                body.innerHTML += `<tr onclick="openProfile('${cid}')" style="cursor:pointer; transition:0.2s;" onmouseover="this.style.background='#f1f2f6'" onmouseout="this.style.background='transparent'">
-                    <td><b>${c.name}</b><br><small style="color:#666">${c.phone}</small></td>
-                    <td style="color:${c.bal > 0 ? 'red' : '#05c46b'}; font-weight:bold">₹${c.bal}</td>
-                    <td><button class="btn" style="background:var(--accent); color:white; padding:5px 10px;">Open</button></td>
-                </tr>`;
-            });
-        } catch(err) { console.error(err); }
+        const uniqueClients = Object.keys(clientMap);
+
+        if(uniqueClients.length === 0) {
+            body.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px; color:#888;">No clients found. Add a new client.</td></tr>';
+            return;
+        }
+
+        body.innerHTML = '';
+        uniqueClients.forEach(cid => {
+            const c = clientMap[cid];
+            // Format name securely for HTML
+            const safeName = c.name.replace(/'/g, "\\'"); 
+            body.innerHTML += `<tr onclick="openProfile('${cid}', '${safeName}')" style="cursor:pointer; transition:0.2s;" onmouseover="this.style.background='#f1f2f6'" onmouseout="this.style.background='transparent'">
+                <td><b>${c.name}</b><br><small style="color:#666">${c.phone}</small></td>
+                <td style="color:${c.bal > 0 ? 'red' : '#05c46b'}; font-weight:bold">₹${c.bal}</td>
+                <td><button class="btn" style="background:var(--accent); color:white; padding:5px 10px;">Open</button></td>
+            </tr>`;
+        });
     }
 
-    function openProfile(cid) {
+    // --- FIX: OPEN PROFILE WITH BOTH ID AND NAME ---
+    function openProfile(cid, cname) {
         activeCID = cid;
-        document.getElementById('pName').innerText = cid;
+        // Fix the heading to show real name instead of timestamp ID
+        document.getElementById('pName').innerText = cname || cid; 
         renderHistory();
         showPage('profile');
     }
@@ -332,6 +336,7 @@
         db.ref('erp_data/' + tid).set(entry).then(() => {
             editModeTID = null; 
             document.getElementById('saveBtn').innerText = "Save Entry";
+            document.getElementById('saveBtn').style.background = "var(--success)";
             ['tService','tTotal','tPaid','tNote'].forEach(id => document.getElementById(id).value = '');
         });
     }
@@ -344,27 +349,45 @@
             document.getElementById('tPaid').value = e.paid;
             document.getElementById('tNote').value = e.note;
             editModeTID = tid; 
-            document.getElementById('saveBtn').innerText = "Update Entry";
+            const sBtn = document.getElementById('saveBtn');
+            sBtn.innerText = "Update Entry";
+            sBtn.style.background = "#f39c12"; // Orange to indicate edit mode
             window.scrollTo(0,0);
         }
     }
 
+    // --- FIX: SMART MATCH FOR HISTORY ---
     function renderHistory() {
         const body = document.getElementById('pHistory'); body.innerHTML = ''; let bal = 0;
-        erpData.filter(d => d.clientID === activeCID).forEach(t => {
-            if(!isAdmin && t.addedByUID !== loggedUser.username && t.service !== "Account Opened") return;
-            bal += (t.bal || 0);
-            
-            if(t.service === "Account Opened") {
-                body.innerHTML += `<tr style="background:#f9f9f9; color:#888;"><td>${t.date}</td><td><b>Account Setup</b></td><td>${t.addedBy}</td><td>-</td><td>-</td><td>-</td></tr>`;
-            } else {
-                body.innerHTML += `<tr><td>${t.date}</td><td>${t.service}</td><td>${t.addedBy}</td><td>₹${t.total}</td><td>₹${t.paid}</td><td><button class="btn" style="background:orange; color:white; padding:5px 10px;" onclick="editEntry('${t.id}')">Edit</button></td></tr>`;
+        const clientDisplayName = document.getElementById('pName').innerText;
+
+        let hasEntries = false;
+
+        erpData.forEach(t => {
+            // Check if entry belongs to this client (matches ID OR Name)
+            if(t.clientID === activeCID || t.clientID === clientDisplayName) {
+                
+                // Staff permissions filter
+                if(!isAdmin && t.addedByUID !== loggedUser.username && t.service !== "Account Opened") return;
+                
+                hasEntries = true;
+                bal += (t.bal || 0);
+                
+                if(t.service === "Account Opened") {
+                    body.innerHTML += `<tr style="background:#f9f9f9; color:#888;"><td>${t.date}</td><td><b>Account Setup</b></td><td>${t.addedBy}</td><td>-</td><td>-</td><td>-</td></tr>`;
+                } else {
+                    body.innerHTML += `<tr><td>${t.date}</td><td>${t.service}</td><td>${t.addedBy}</td><td>₹${t.total}</td><td>₹${t.paid}</td><td><button class="btn" style="background:#f39c12; color:white; padding:5px 10px;" onclick="editEntry('${t.id}')"><i class="fa fa-pen"></i> Edit</button></td></tr>`;
+                }
             }
         });
+
+        if(!hasEntries) {
+            body.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px; color:#888;">No transactions found for this client.</td></tr>`;
+        }
+
         document.getElementById('pBalance').innerText = "Pending Balance: ₹" + bal;
     }
 
-    // --- UPDATE STATS & DRAW CHARTS ---
     function updateStats() {
         let rev=0, rec=0, pend=0;
         let servicesCount = {};
@@ -375,10 +398,7 @@
             rev += (t.total || 0); 
             rec += (t.paid || 0); 
             pend += (t.bal || 0); 
-            
-            if(t.service && t.service !== "Account Opened") {
-                servicesCount[t.service] = (servicesCount[t.service] || 0) + 1;
-            }
+            if(t.service && t.service !== "Account Opened") { servicesCount[t.service] = (servicesCount[t.service] || 0) + 1; }
         });
 
         document.getElementById('d-rev').innerText = "₹" + rev;
@@ -389,7 +409,6 @@
         let savedClients = clientsList.map(c => c.id);
         document.getElementById('d-cl').innerText = [...new Set([...transClients, ...savedClients])].filter(Boolean).length;
 
-        // Draw Charts
         drawCharts(rec, pend, servicesCount);
     }
 
@@ -397,74 +416,30 @@
         if(ch1) ch1.destroy();
         if(ch2) ch2.destroy();
 
-        // 1. Payment Doughnut Chart
         const ctx1 = document.getElementById('payChart').getContext('2d');
-        ch1 = new Chart(ctx1, {
-            type: 'doughnut',
-            data: {
-                labels: ['Received (₹)', 'Pending (₹)'],
-                datasets: [{
-                    data: [received, pending],
-                    backgroundColor: ['#05c46b', '#ff3f34']
-                }]
-            },
-            options: { maintainAspectRatio: false }
-        });
+        ch1 = new Chart(ctx1, { type: 'doughnut', data: { labels: ['Received (₹)', 'Pending (₹)'], datasets: [{ data: [received, pending], backgroundColor: ['#05c46b', '#ff3f34'] }] }, options: { maintainAspectRatio: false } });
 
-        // 2. Services Bar Chart
         const ctx2 = document.getElementById('workChart').getContext('2d');
-        ch2 = new Chart(ctx2, {
-            type: 'bar',
-            data: {
-                labels: Object.keys(servicesData),
-                datasets: [{
-                    label: 'Number of Applications',
-                    data: Object.values(servicesData),
-                    backgroundColor: '#3498db'
-                }]
-            },
-            options: { maintainAspectRatio: false }
-        });
+        ch2 = new Chart(ctx2, { type: 'bar', data: { labels: Object.keys(servicesData), datasets: [{ label: 'Applications', data: Object.values(servicesData), backgroundColor: '#3498db' }] }, options: { maintainAspectRatio: false } });
     }
 
-    // --- NEW: EXPORT TO EXCEL ---
     function exportData() {
-        if(erpData.length === 0) return alert("Hale tak koi data nahi hai download karan layi!");
-        
+        if(erpData.length === 0) return alert("No data available to download.");
         const myData = isAdmin ? erpData : erpData.filter(d => d.addedByUID === loggedUser.username);
         let rows = [];
-
         myData.forEach(t => {
             if(t.service !== "Account Opened") {
-                rows.push({
-                    "Date": t.date,
-                    "Client Name": t.clientID,
-                    "Service / Kam": t.service,
-                    "Notes (Passport/Visa No)": t.note,
-                    "Total Fees (₹)": t.total,
-                    "Paid (₹)": t.paid,
-                    "Pending Balance (₹)": t.bal,
-                    "Entry By": t.addedBy
-                });
+                rows.push({ "Date": t.date, "Client Name": t.clientID, "Service": t.service, "Notes": t.note, "Total Fees": t.total, "Paid": t.paid, "Balance": t.bal, "Entry By": t.addedBy });
             }
         });
-
-        if(rows.length === 0) return alert("Download karan layi koi transactions nahi miliyan.");
-
-        const ws = XLSX.utils.json_to_sheet(rows);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Harpreet_Comm_Data");
-        
-        const fileName = isAdmin ? "Harpreet_Comm_All_Report.xlsx" : `Report_${loggedUser.name}.xlsx`;
-        XLSX.writeFile(wb, fileName);
+        if(rows.length === 0) return alert("No valid transactions found.");
+        const ws = XLSX.utils.json_to_sheet(rows); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Report"); XLSX.writeFile(wb, isAdmin ? "Harpreet_Comm_All_Report.xlsx" : `Report_${loggedUser.name}.xlsx`);
     }
 
     function filterClients(q) {
         q = q.toLowerCase();
         const trs = document.getElementById('clientBody').getElementsByTagName('tr');
-        for(let i=0; i<trs.length; i++) {
-            trs[i].style.display = trs[i].innerText.toLowerCase().includes(q) ? "" : "none";
-        }
+        for(let i=0; i<trs.length; i++) { trs[i].style.display = trs[i].innerText.toLowerCase().includes(q) ? "" : "none"; }
     }
 
     function showPage(id) {
@@ -477,20 +452,14 @@
     function registerStaff() {
         const n = document.getElementById('stName').value, u = document.getElementById('stUser').value.trim(), p = document.getElementById('stPass').value, s = document.getElementById('stSalary').value;
         if(!n || !u || !p) return alert("Fill all fields!");
-        db.ref('users/' + u).set({ name: n, username: u, password: p, salary: s }).then(() => {
-            alert("Staff Registered Online!");
-            ['stName','stUser','stPass','stSalary'].forEach(id => document.getElementById(id).value = '');
-        });
+        db.ref('users/' + u).set({ name: n, username: u, password: p, salary: s }).then(() => { alert("Staff Registered!"); ['stName','stUser','stPass','stSalary'].forEach(id => document.getElementById(id).value = ''); });
     }
 
     function viewStaffDetail(uid) {
         db.ref('users/' + uid).once('value', snap => {
-            const u = snap.val();
-            document.getElementById('sdName').innerText = u.name;
-            document.getElementById('sdUser').innerText = "User ID: " + uid;
+            const u = snap.val(); document.getElementById('sdName').innerText = u.name; document.getElementById('sdUser').innerText = "User ID: " + uid;
             db.ref('attendance/' + uid).once('value', attSnap => {
-                const days = attSnap.val() ? Object.keys(attSnap.val()).length : 0;
-                const calSalary = (u.salary / 30) * days;
+                const days = attSnap.val() ? Object.keys(attSnap.val()).length : 0; const calSalary = (u.salary / 30) * days;
                 document.getElementById('sdSalary').innerText = "Salary (" + days + " Days): ₹" + calSalary.toFixed(0);
             });
             showPage('staff-detail-page');
