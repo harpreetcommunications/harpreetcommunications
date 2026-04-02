@@ -21,7 +21,8 @@
         .box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
-        .input-field { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .input-field { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; outline:none; }
+        .input-field:focus { border-color: var(--accent); }
         .btn { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
         #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); z-index: 10000; display: flex; justify-content: center; align-items: center; }
         .login-box { background: white; padding: 30px; border-radius: 15px; width: 320px; text-align: center; }
@@ -31,10 +32,10 @@
 
     <div id="login-overlay">
         <div class="login-box">
-            <h2 style="color:var(--primary)">HARPREET COMM.</h2>
+            <h2 style="color:var(--primary)">HARPREET COMMUNICATIONS</h2>
             <input type="text" id="logUser" class="input-field" placeholder="Username">
             <input type="password" id="logPass" class="input-field" placeholder="Password" onkeypress="if(event.key==='Enter')handleLogin()">
-            <button class="btn" style="background:var(--accent); color:white; width:100%" onclick="handleLogin()">Login</button>
+            <button class="btn" style="background:var(--accent); color:white; width:100%" onclick="handleLogin()">Login to ERP</button>
         </div>
     </div>
 
@@ -43,8 +44,8 @@
             <div class="sidebar-brand">HARPREET COMMUNICATIONS</div>
             <div class="nav-menu">
                 <div class="nav-item active" onclick="showPage('home')"><i class="fa fa-home"></i> Dashboard</div>
-                <div class="nav-item" onclick="showPage('all-clients')"><i class="fa fa-users"></i> Accounts</div>
-                <div class="nav-item" onclick="showPage('add-client')"><i class="fa fa-user-plus"></i> New Client</div>
+                <div class="nav-item" onclick="showPage('all-clients')"><i class="fa fa-users"></i> All Accounts</div>
+                <div class="nav-item" onclick="showPage('add-client')"><i class="fa fa-user-plus"></i> Add Client</div>
                 <div id="admin-only" style="display:none;">
                     <div class="nav-item" onclick="showPage('staff-mgmt')"><i class="fa fa-user-tie"></i> Staff Management</div>
                 </div>
@@ -56,13 +57,13 @@
         <div class="main-panel">
             <div class="top-bar">
                 <div style="font-weight:bold;">Welcome, <span id="user-name-display"></span></div>
-                <div style="color:var(--success); font-size:12px; font-weight:bold;"><i class="fa fa-cloud"></i> SECURE CLOUD SYNC</div>
+                <div style="color:var(--success); font-size:12px; font-weight:bold;"><i class="fa fa-cloud"></i> DATA SYNCED</div>
             </div>
 
             <div class="content-scroll">
                 <div id="home" class="page active">
                     <div class="box" style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 15px; text-align:center;">
-                        <div><h2 id="d-rev">₹0</h2><small>Revenue</small></div>
+                        <div><h2 id="d-rev">₹0</h2><small>Total Revenue</small></div>
                         <div><h2 id="d-rec">₹0</h2><small>Received</small></div>
                         <div><h2 id="d-pend" style="color:var(--danger)">₹0</h2><small>Pending</small></div>
                         <div><h2 id="d-cl">0</h2><small>Total Clients</small></div>
@@ -72,14 +73,17 @@
                 <div id="all-clients" class="page">
                     <div class="box">
                         <h2>Client Directory</h2>
-                        <input type="text" id="clientSearch" class="input-field" placeholder="Search Name..." onkeyup="filterClients(this.value)">
-                        <table><thead><tr><th>Name</th><th>Phone</th><th>Balance</th><th>Action</th></tr></thead><tbody id="clientBody"></tbody></table>
+                        <input type="text" class="input-field" placeholder="Search Client Name..." onkeyup="filterClients(this.value)">
+                        <table>
+                            <thead><tr><th>Client Name & Phone</th><th>Your Pending Balance</th><th>Action</th></tr></thead>
+                            <tbody id="clientBody"></tbody>
+                        </table>
                     </div>
                 </div>
 
                 <div id="add-client" class="page">
                     <div class="box" style="max-width:500px; margin:auto;">
-                        <h2>Add New Client Account</h2>
+                        <h2>Open New Account</h2>
                         <input type="text" id="ncName" class="input-field" placeholder="Client Name">
                         <input type="text" id="ncPhone" class="input-field" placeholder="Mobile Number (Optional)">
                         <button class="btn" style="background:var(--success); color:white; width:100%" onclick="addClient()">Create Account</button>
@@ -87,19 +91,21 @@
                 </div>
 
                 <div id="profile" class="page">
-                    <button class="btn" onclick="showPage('all-clients')" style="background:#888; color:white; margin-bottom:10px;">Back</button>
+                    <button class="btn" onclick="showPage('all-clients')" style="background:#888; color:white; margin-bottom:10px;">← Back to List</button>
                     <div class="box">
                         <h2 id="pName">Name</h2>
                         <h3 id="pBalance" style="color:var(--danger)">₹0</h3>
                         <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
-                            <input type="text" id="tService" class="input-field" placeholder="Service">
-                            <input type="number" id="tTotal" class="input-field" placeholder="Total">
-                            <input type="number" id="tPaid" class="input-field" placeholder="Paid">
+                            <input type="text" id="tService" class="input-field" placeholder="Service Name">
+                            <input type="number" id="tTotal" class="input-field" placeholder="Total Fees">
+                            <input type="number" id="tPaid" class="input-field" placeholder="Paid Now">
                         </div>
-                        <textarea id="tNote" class="input-field" placeholder="Notes..."></textarea>
-                        <button class="btn" id="saveBtn" style="background:var(--success); color:white" onclick="saveTransaction()">Save & Sync Data</button>
+                        <textarea id="tNote" class="input-field" placeholder="Important Notes..."></textarea>
+                        <button class="btn" id="saveBtn" style="background:var(--success); color:white" onclick="saveTransaction()">Save Entry</button>
                     </div>
-                    <div class="box"><table><thead><tr><th>Date</th><th>Service</th><th>Staff</th><th>Total</th><th>Paid</th><th>Action</th></tr></thead><tbody id="pHistory"></tbody></table></div>
+                    <div class="box">
+                        <table><thead><tr><th>Date</th><th>Service</th><th>Staff</th><th>Total</th><th>Paid</th><th>Action</th></tr></thead><tbody id="pHistory"></tbody></table>
+                    </div>
                 </div>
 
                 <div id="staff-mgmt" class="page">
@@ -107,11 +113,11 @@
                         <h2>Register New Staff</h2>
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                             <input type="text" id="stName" class="input-field" placeholder="Full Name">
-                            <input type="text" id="stUser" class="input-field" placeholder="Username">
+                            <input type="text" id="stUser" class="input-field" placeholder="Username (Login ID)">
                             <input type="password" id="stPass" class="input-field" placeholder="Password">
                             <input type="number" id="stSalary" class="input-field" placeholder="Salary">
                         </div>
-                        <button class="btn" style="background:var(--accent); color:white" onclick="registerStaff()">Register</button>
+                        <button class="btn" style="background:var(--accent); color:white" onclick="registerStaff()">Register Staff</button>
                     </div>
                     <div class="box">
                         <h3>Staff List & Passwords</h3>
@@ -120,7 +126,7 @@
                 </div>
 
                 <div id="staff-detail-page" class="page">
-                    <button class="btn" onclick="showPage('staff-mgmt')" style="background:#888; color:white; margin-bottom:10px;">Back</button>
+                    <button class="btn" onclick="showPage('staff-mgmt')" style="background:#888; color:white; margin-bottom:10px;">← Back</button>
                     <div class="box">
                         <h2 id="sdName">Staff Name</h2>
                         <p id="sdUser">User ID: --</p>
@@ -143,6 +149,7 @@
     </div>
 
 <script>
+    // --- FIREBASE CONFIG ---
     const firebaseConfig = {
         apiKey: "AIzaSyBHzvyTGmY2l7o1UaPnq7TvsAVdFTr0SNo",
         authDomain: "harpreet-communications.firebaseapp.com",
@@ -159,7 +166,6 @@
     let loggedUser = null;
     let isAdmin = false;
     let erpData = [];
-    let clientsList = [];
     let activeCID = null;
     let editModeTID = null;
 
@@ -182,12 +188,8 @@
         });
     }
 
+    // --- SINGLE SYNC METHOD ---
     function initCloudSync() {
-        db.ref('clients').on('value', snap => {
-            clientsList = snap.val() ? Object.values(snap.val()) : [];
-            if(document.getElementById('all-clients').classList.contains('active')) renderClients();
-        });
-
         db.ref('erp_data').on('value', snap => {
             erpData = snap.val() ? Object.values(snap.val()) : [];
             updateStats();
@@ -208,81 +210,81 @@
         }
     }
 
-    // --- FIX: Add Client Opens Profile Immediately ---
+    // --- ADD CLIENT (ACCOUNT OPENED TRICK) ---
     function addClient() {
-        const n = document.getElementById('ncName').value;
-        const p = document.getElementById('ncPhone').value || "N/A";
+        const n = document.getElementById('ncName').value.trim();
+        const p = document.getElementById('ncPhone').value.trim();
         if(!n) return alert("Client Name is required!");
         
-        const cid = Date.now().toString();
-        db.ref('clients/' + cid).set({ id: cid, name: n, phone: p }).then(() => {
-            document.getElementById('ncName').value = '';
-            document.getElementById('ncPhone').value = '';
-            // Immediately open profile so they can enter data
-            openProfile(cid, n);
-        });
-    }
-
-    // --- FIX: Render Old & New Clients Properly ---
-    function renderClients() {
-        const body = document.getElementById('clientBody'); body.innerHTML = '';
-        
-        // Render New System Clients
-        clientsList.forEach(c => {
-            const bal = erpData.filter(d => d.clientID === c.id).reduce((s,t) => s + (t.bal || 0), 0);
-            body.innerHTML += `<tr onclick="openProfile('${c.id}', '${c.name}')" style="cursor:pointer"><td><b>${c.name}</b></td><td>${c.phone}</td><td style="color:red; font-weight:bold">₹${bal}</td><td>View</td></tr>`;
-        });
-
-        // Render Legacy Clients (Before V3 update)
-        const newIDs = clientsList.map(c => c.id);
-        const legacyClients = [...new Set(erpData.map(d => d.clientID))].filter(id => !newIDs.includes(id));
-        
-        legacyClients.forEach(cName => {
-            if(!cName || cName === "Unknown") return;
-            const bal = erpData.filter(d => d.clientID === cName).reduce((s,t) => s + (t.bal || 0), 0);
-            body.innerHTML += `<tr onclick="openProfile('${cName}', '${cName}')" style="cursor:pointer"><td><b>${cName}</b></td><td>Old Entry</td><td style="color:red; font-weight:bold">₹${bal}</td><td>View</td></tr>`;
-        });
-    }
-
-    function openProfile(cid, cname) {
-        activeCID = cid;
-        document.getElementById('pName').innerText = cname || "Client Detail";
-        renderHistory();
-        showPage('profile');
-    }
-
-    // --- FIX: Bulletproof Save Transaction ---
-    function saveTransaction() {
-        const s = document.getElementById('tService').value || "General Service";
-        const t = parseFloat(document.getElementById('tTotal').value) || 0;
-        const p = parseFloat(document.getElementById('tPaid').value) || 0;
-        const n = document.getElementById('tNote').value || " "; // Space to prevent Firebase dropping it
-
-        const tid = editModeTID || Date.now().toString();
-        
-        // Fallbacks so Firebase NEVER crashes
+        // Combine Name and Phone for Unique Identity
+        const cid = p ? `${n} (${p})` : n;
+        const tid = Date.now().toString();
         const uName = loggedUser ? (loggedUser.name || "Admin") : "Admin";
         const uID = loggedUser ? (loggedUser.username || "admin") : "admin";
 
         const entry = { 
-            id: tid, 
-            clientID: activeCID || "Unknown", 
-            date: new Date().toLocaleDateString('en-GB'), 
-            service: s, 
-            total: t, 
-            paid: p, 
-            bal: t - p, 
-            note: n, 
-            addedBy: uName, 
-            addedByUID: uID 
+            id: tid, clientID: cid, date: new Date().toLocaleDateString('en-GB'), 
+            service: "Account Opened", total: 0, paid: 0, bal: 0, note: "Account Setup", 
+            addedBy: uName, addedByUID: uID 
+        };
+
+        db.ref('erp_data/' + tid).set(entry).then(() => {
+            document.getElementById('ncName').value = '';
+            document.getElementById('ncPhone').value = '';
+            openProfile(cid);
+        });
+    }
+
+    // --- RENDER CLIENTS (EVERYONE SEES ALL CLIENTS) ---
+    function renderClients() {
+        const body = document.getElementById('clientBody'); body.innerHTML = '';
+        const uniqueClients = [...new Set(erpData.map(d => d.clientID))].filter(Boolean); // Get all unique names
+        
+        uniqueClients.forEach(c => {
+            // Calculate Balance based on what user is allowed to see
+            let myEntries = erpData.filter(d => d.clientID === c);
+            if(!isAdmin) {
+                myEntries = myEntries.filter(d => d.addedByUID === loggedUser.username);
+            }
+            const bal = myEntries.reduce((s,t) => s + (t.bal || 0), 0);
+
+            body.innerHTML += `<tr onclick="openProfile('${c}')" style="cursor:pointer">
+                <td><b>${c}</b></td>
+                <td style="color:red; font-weight:bold">₹${bal}</td>
+                <td><button class="btn" style="background:var(--accent); color:white; padding:5px 10px;">Open</button></td>
+            </tr>`;
+        });
+    }
+
+    function openProfile(cid) {
+        activeCID = cid;
+        document.getElementById('pName').innerText = cid;
+        renderHistory();
+        showPage('profile');
+    }
+
+    // --- SAVE TRANSACTION ---
+    function saveTransaction() {
+        const s = document.getElementById('tService').value || "Service";
+        const t = parseFloat(document.getElementById('tTotal').value) || 0;
+        const p = parseFloat(document.getElementById('tPaid').value) || 0;
+        const n = document.getElementById('tNote').value || " ";
+
+        const tid = editModeTID || Date.now().toString();
+        const uName = loggedUser ? (loggedUser.name || "Admin") : "Admin";
+        const uID = loggedUser ? (loggedUser.username || "admin") : "admin";
+
+        const entry = { 
+            id: tid, clientID: activeCID, date: new Date().toLocaleDateString('en-GB'), 
+            service: s, total: t, paid: p, bal: t - p, note: n, 
+            addedBy: uName, addedByUID: uID 
         };
 
         db.ref('erp_data/' + tid).set(entry).then(() => {
             editModeTID = null; 
-            document.getElementById('saveBtn').innerText = "Save & Sync";
+            document.getElementById('saveBtn').innerText = "Save Entry";
             ['tService','tTotal','tPaid','tNote'].forEach(id => document.getElementById(id).value = '');
-            alert("Entry Saved Online!");
-        }).catch(err => alert("Error saving: " + err.message));
+        });
     }
 
     function editEntry(tid) {
@@ -301,16 +303,19 @@
     function renderHistory() {
         const body = document.getElementById('pHistory'); body.innerHTML = ''; let bal = 0;
         erpData.filter(d => d.clientID === activeCID).forEach(t => {
-            const entryUID = t.addedByUID || "admin";
-            const myUID = loggedUser ? (loggedUser.username || "admin") : "admin";
-            
             // Sub-user only sees own entries
-            if(!isAdmin && entryUID !== myUID) return;
+            if(!isAdmin && t.addedByUID !== loggedUser.username) return;
             
             bal += (t.bal || 0);
-            body.innerHTML += `<tr><td>${t.date}</td><td>${t.service}</td><td>${t.addedBy || "Admin"}</td><td>₹${t.total}</td><td>₹${t.paid}</td><td><button class="btn" style="background:orange; color:white; padding:5px 10px;" onclick="editEntry('${t.id}')">Edit</button></td></tr>`;
+            
+            // Highlight Account Opened
+            if(t.service === "Account Opened") {
+                body.innerHTML += `<tr style="background:#f9f9f9"><td>${t.date}</td><td><b>${t.service}</b></td><td>${t.addedBy}</td><td>-</td><td>-</td><td>-</td></tr>`;
+            } else {
+                body.innerHTML += `<tr><td>${t.date}</td><td>${t.service}</td><td>${t.addedBy}</td><td>₹${t.total}</td><td>₹${t.paid}</td><td><button class="btn" style="background:orange; color:white; padding:5px 10px;" onclick="editEntry('${t.id}')">Edit</button></td></tr>`;
+            }
         });
-        document.getElementById('pBalance').innerText = "₹" + bal;
+        document.getElementById('pBalance').innerText = "Pending: ₹" + bal;
     }
 
     function filterClients(q) {
@@ -323,20 +328,29 @@
 
     function updateStats() {
         let rev=0, rec=0, pend=0;
-        erpData.forEach(t => { rev += (t.total || 0); rec += (t.paid || 0); pend += (t.bal || 0); });
+        // Sub-user only sees stats for their own entries, Admin sees all
+        const myData = isAdmin ? erpData : erpData.filter(d => d.addedByUID === loggedUser.username);
+        
+        myData.forEach(t => { rev += (t.total || 0); rec += (t.paid || 0); pend += (t.bal || 0); });
         document.getElementById('d-rev').innerText = "₹" + rev;
         document.getElementById('d-rec').innerText = "₹" + rec;
         document.getElementById('d-pend').innerText = "₹" + pend;
-        // Total unique clients (New + Old)
-        const allClientIDs = [...new Set(erpData.map(d => d.clientID))];
-        const combinedCount = new Set([...allClientIDs, ...clientsList.map(c=>c.id)]).size;
-        document.getElementById('d-cl').innerText = combinedCount;
+        document.getElementById('d-cl').innerText = [...new Set(erpData.map(d => d.clientID))].filter(Boolean).length;
     }
 
     function showPage(id) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById(id).classList.add('active');
+    }
+
+    function registerStaff() {
+        const n = document.getElementById('stName').value, u = document.getElementById('stUser').value.trim(), p = document.getElementById('stPass').value, s = document.getElementById('stSalary').value;
+        if(!n || !u || !p) return alert("Fill all fields!");
+        db.ref('users/' + u).set({ name: n, username: u, password: p, salary: s }).then(() => {
+            alert("Staff Registered Online!");
+            ['stName','stUser','stPass','stSalary'].forEach(id => document.getElementById(id).value = '');
+        });
     }
 
     function viewStaffDetail(uid) {
@@ -348,19 +362,10 @@
             db.ref('attendance/' + uid).once('value', attSnap => {
                 const days = attSnap.val() ? Object.keys(attSnap.val()).length : 0;
                 const calSalary = (u.salary / 30) * days;
-                document.getElementById('sdSalary').innerText = "Calculated Salary (" + days + " Days): ₹" + calSalary.toFixed(0);
-                document.getElementById('sdSummary').innerHTML = `<p>Total Entries Done: <b>${erpData.filter(t => t.addedByUID === uid).length}</b></p>`;
+                document.getElementById('sdSalary').innerText = "Salary calculation (" + days + " Days): ₹" + calSalary.toFixed(0);
+                document.getElementById('sdSummary').innerHTML = `<p>Total Entries: <b>${erpData.filter(t => t.addedByUID === uid && t.service !== "Account Opened").length}</b></p>`;
             });
             showPage('staff-detail-page');
-        });
-    }
-
-    function registerStaff() {
-        const n = document.getElementById('stName').value, u = document.getElementById('stUser').value.trim(), p = document.getElementById('stPass').value, s = document.getElementById('stSalary').value;
-        if(!n || !u || !p) return alert("Fill all fields!");
-        db.ref('users/' + u).set({ name: n, username: u, password: p, salary: s }).then(() => {
-            alert("Staff Registered Online!");
-            ['stName','stUser','stPass','stSalary'].forEach(id => document.getElementById(id).value = '');
         });
     }
     
@@ -368,7 +373,7 @@
         const op = document.getElementById('oldPass').value, np = document.getElementById('newPass').value, cp = document.getElementById('confirmPass').value;
         if(loggedUser.password !== op) return alert("Wrong Old Password!");
         if(np !== cp) return alert("Mismatch!");
-        db.ref('users/' + loggedUser.username + '/password').set(np).then(() => { alert("Password Updated Everywhere!"); location.reload(); });
+        db.ref('users/' + loggedUser.username + '/password').set(np).then(() => { alert("Password Updated!"); location.reload(); });
     }
 </script>
 </body>
