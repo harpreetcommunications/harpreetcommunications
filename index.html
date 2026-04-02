@@ -2,7 +2,7 @@
 <html lang="pa">
 <head>
     <meta charset="UTF-8">
-    <title>Harpreet Communications - Cloud ERP Pro</title>
+    <title>Harpreet Communications</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -26,7 +26,7 @@
         th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
         .input-field { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; outline:none; }
         .input-field:focus { border-color: var(--accent); }
-        .btn { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .btn:active { transform: scale(0.95); }
         #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); z-index: 10000; display: flex; justify-content: center; align-items: center; }
         .login-box { background: white; padding: 30px; border-radius: 15px; width: 320px; text-align: center; }
@@ -37,10 +37,10 @@
 
     <div id="login-overlay">
         <div class="login-box">
-            <h2 style="color:var(--primary)">HARPREET COMM.</h2>
+            <h2 style="color:var(--primary)">HARPREET COMMUNICATIONS</h2>
             <input type="text" id="logUser" class="input-field" placeholder="Username">
             <input type="password" id="logPass" class="input-field" placeholder="Password" onkeypress="if(event.key==='Enter')handleLogin()">
-            <button class="btn" style="background:var(--accent); color:white; width:100%" onclick="handleLogin()">Login to ERP</button>
+            <button class="btn" style="background:var(--accent); color:white; width:100%" onclick="handleLogin()">Login</button>
         </div>
     </div>
 
@@ -121,7 +121,7 @@
                             <input type="number" id="tPaid" class="input-field" placeholder="Paid Now">
                         </div>
                         <textarea id="tNote" class="input-field" placeholder="Important Notes..."></textarea>
-                        <button class="btn" id="saveBtn" style="background:var(--success); color:white; padding:10px 20px;" onclick="saveTransaction()">Save Entry</button>
+                        <button class="btn" id="saveBtn" style="background:var(--success); color:white" onclick="saveTransaction()">Save Entry</button>
                     </div>
                     
                     <div class="box">
@@ -351,82 +351,25 @@
         }
     }
 
-    // --- NEW: PRINT BILL FUNCTION ---
-    function printBill(tid) {
-        const t = erpData.find(x => x.id === tid);
-        if(!t) return;
-        const cName = document.getElementById('pName').innerText;
-        
-        const win = window.open('', '_blank');
-        win.document.write(`
-            <html><head><title>Invoice - ${cName}</title>
-            <style>
-                body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #333; max-width: 800px; margin: auto; }
-                .header { text-align: center; border-bottom: 2px solid #1e272e; padding-bottom: 20px; margin-bottom: 30px; }
-                .header h1 { margin: 0; font-size: 28px; color: #1e272e; text-transform: uppercase; letter-spacing: 1px; }
-                .header p { margin: 5px 0; font-size: 15px; color: #555; }
-                .details-container { display: flex; justify-content: space-between; margin-bottom: 30px; }
-                .details p { margin: 5px 0; font-size: 15px;}
-                .table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-                .table th, .table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-                .table th { background-color: #f1f2f6; color: #1e272e; }
-                .totals { width: 40%; float: right; border-collapse: collapse; }
-                .totals th, .totals td { padding: 10px; text-align: right; border-bottom: 1px solid #eee; font-size:15px; }
-                .footer { clear: both; text-align: center; margin-top: 80px; font-size: 13px; color: #777; border-top: 1px solid #eee; padding-top: 20px; }
-            </style>
-            </head><body>
-            <div class="header">
-                <h1>Harpreet Communications</h1>
-                <p>Shop No. 3, Anoop Nagar, Gakhal Road, Basti Danishmandan, Jalandhar</p>
-                <p>Ph: +91-88475-93813</p>
-            </div>
-            <div class="details-container">
-                <div class="details">
-                    <p><strong>Billed To:</strong> ${cName}</p>
-                    <p><strong>Service:</strong> ${t.service}</p>
-                </div>
-                <div class="details" style="text-align:right;">
-                    <p><strong>Invoice Date:</strong> ${t.date}</p>
-                    <p><strong>Receipt No:</strong> #${t.id.substring(t.id.length - 6)}</p>
-                </div>
-            </div>
-            <table class="table">
-                <thead><tr><th>Service Description</th><th>Important Notes</th></tr></thead>
-                <tbody><tr><td>${t.service}</td><td>${t.note || '-'}</td></tr></tbody>
-            </table>
-            <table class="totals">
-                <tr><th>Total Fees:</th><td>₹${t.total}</td></tr>
-                <tr><th>Amount Paid:</th><td>₹${t.paid}</td></tr>
-                <tr><th>Pending Balance:</th><td style="color:red; font-weight:bold;">₹${t.bal}</td></tr>
-            </table>
-            <div class="footer">
-                <p>Thank you for choosing Harpreet Communications!</p>
-                <p>This is a computer-generated receipt.</p>
-            </div>
-            <script>
-                window.onload = function() { setTimeout(function(){ window.print(); }, 500); }
-            </script>
-            </body></html>
-        `);
-        win.document.close();
-    }
-
+    // --- NEW: WHATSAPP FUNCTION ---
     function sendWhatsApp(tid) {
         const t = erpData.find(x => x.id === tid);
         if(!t) return;
 
+        // Try to find the client's phone number
         let phoneNum = "";
         let cName = document.getElementById('pName').innerText;
         
         const clientObj = clientsList.find(c => c.id === activeCID || c.name === activeCID);
         if(clientObj && clientObj.phone && clientObj.phone !== "N/A" && clientObj.phone !== "-") {
-            phoneNum = clientObj.phone.replace(/\D/g, ''); 
+            phoneNum = clientObj.phone.replace(/\D/g, ''); // Extract only numbers
         } else {
+            // Try to extract from activeCID if it has format Name (Phone)
             const match = activeCID.match(/\(([^)]+)\)/);
             if(match) phoneNum = match[1].replace(/\D/g, '');
         }
 
-        if(phoneNum.length === 10) phoneNum = "91" + phoneNum; 
+        if(phoneNum.length === 10) phoneNum = "91" + phoneNum; // Add India code if 10 digits
         
         let message = `Sat Sri Akal ${cName} ji,\n\nTuhadi entry *${t.service}* layi Harpreet Communications vich save ho gayi hai.\n\n*Total Fees:* ₹${t.total}\n*Paid:* ₹${t.paid}\n*Pending Balance:* ₹${t.bal}\n\nThanks & Regards,\n*Harpreet Communications*\nShop No. 3, Anoop Nagar, Gakhal Road, Basti Danishmandan, Jalandhar\nPh: +91-8847593813`;
         
@@ -459,9 +402,8 @@
                         <td>₹${t.total}</td>
                         <td>₹${t.paid}</td>
                         <td>
-                            <button class="btn" style="background:#3498db; color:white; margin-right:5px;" onclick="printBill('${t.id}')" title="Print Bill"><i class="fa fa-print"></i></button>
-                            <button class="btn" style="background:#f39c12; color:white; margin-right:5px;" onclick="editEntry('${t.id}')" title="Edit Entry"><i class="fa fa-pen"></i></button>
-                            <button class="btn" style="background:var(--whatsapp); color:white;" onclick="sendWhatsApp('${t.id}')" title="Send WhatsApp Receipt"><i class="fab fa-whatsapp"></i></button>
+                            <button class="btn" style="background:#f39c12; color:white; padding:5px 10px; margin-right:5px;" onclick="editEntry('${t.id}')" title="Edit Entry"><i class="fa fa-pen"></i></button>
+                            <button class="btn" style="background:var(--whatsapp); color:white; padding:5px 10px;" onclick="sendWhatsApp('${t.id}')" title="Send WhatsApp Receipt"><i class="fab fa-whatsapp"></i></button>
                         </td>
                     </tr>`;
                 }
