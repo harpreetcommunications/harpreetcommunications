@@ -149,7 +149,7 @@
     </div>
 
 <script>
-    // --- FIREBASE CONFIG ---
+    // --- FIREBASE CONFIG (EH ZAROORI BHARO) ---
     const firebaseConfig = {
         apiKey: "AIzaSyBHzvyTGmY2l7o1UaPnq7TvsAVdFTr0SNo",
         authDomain: "harpreet-communications.firebaseapp.com",
@@ -189,15 +189,13 @@
         });
     }
 
-    // --- DUAL SYNC METHOD (Reads Both Folders) ---
+    // --- BULLETPROOF SYNC METHOD ---
     function initCloudSync() {
-        // Purane clients read karo
         db.ref('clients').on('value', snap => {
             clientsList = snap.val() ? Object.values(snap.val()) : [];
             if(document.getElementById('all-clients').classList.contains('active')) renderClients();
         });
 
-        // Sari entries read karo
         db.ref('erp_data').on('value', snap => {
             erpData = snap.val() ? Object.values(snap.val()) : [];
             updateStats();
@@ -218,56 +216,88 @@
         }
     }
 
-    // --- DOUBLE SAVE: Save client name to BOTH places ---
+    // --- ADD CLIENT (Safe Save) ---
     function addClient() {
-        const n = document.getElementById('ncName').value.trim();
-        const p = document.getElementById('ncPhone').value.trim();
-        if(!n) return alert("Client Name is required!");
-        
-        const cid = p ? `${n} (${p})` : n;
-        const tid = Date.now().toString();
-        const uName = loggedUser ? (loggedUser.name || "Admin") : "Admin";
-        const uID = loggedUser ? (loggedUser.username || "admin") : "admin";
+        try {
+            const n = document.getElementById('ncName').value.trim();
+            const p = document.getElementById('ncPhone').value.trim();
+            if(!n) return alert("Client Name is required!");
+            
+            // Format name safely
+            const cid = p ? `${n} (${p})` : n;
+            const tid = Date.now().toString();
+            const uName = loggedUser ? (loggedUser.name || "Admin") : "Admin";
+            const uID = loggedUser ? (loggedUser.username || "admin") : "admin";
 
-        // Save to clients list (To show name permanently)
-        db.ref('clients/' + Date.now()).set({ id: cid, name: cid, phone: p });
+            // Save Client Detail (Date.now() as safe key)
+            db.ref('clients/' + Date.now()).set({ id: cid, name: n, phone: p || "N/A" });
 
-        // Save Account Opened Entry
-        const entry = { 
-            id: tid, clientID: cid, date: new Date().toLocaleDateString('en-GB'), 
-            service: "Account Opened", total: 0, paid: 0, bal: 0, note: "Account Setup", 
-            addedBy: uName, addedByUID: uID 
-        };
+            // Save First Dummy Entry
+            const entry = { 
+                id: tid, clientID: cid, date: new Date().toLocaleDateString('en-GB'), 
+                service: "Account Opened", total: 0, paid: 0, bal: 0, note: "Account Setup", 
+                addedBy: uName, addedByUID: uID 
+            };
 
-        db.ref('erp_data/' + tid).set(entry).then(() => {
-            document.getElementById('ncName').value = '';
-            document.getElementById('ncPhone').value = '';
-            openProfile(cid); // Sidha profile khul jayegi
-        });
+            db.ref('erp_data/' + tid).set(entry).then(() => {
+                document.getElementById('ncName').value = '';
+                document.getElementById('ncPhone').value = '';
+                openProfile(cid); // Jump to profile immediately
+            });
+        } catch(err) {
+            console.error(err);
+            alert("Error adding client. Please check details.");
+        }
     }
 
-    // --- RENDER CLIENTS (Merge Purana + Nawa Data) ---
+    // --- RENDER CLIENTS (Auto-Repair & Error Free) ---
     function renderClients() {
-        const body = document.getElementById('clientBody'); body.innerHTML = '';
+        const body = document.getElementById('clientBody');
+        body.innerHTML = '';
         
-        // Combine clients from both lists so NOTHING is missed
-        let transClients = erpData.map(d => d.clientID);
-        let savedClients = clientsList.map(c => c.name);
-        const uniqueClients = [...new Set([...transClients, ...savedClients])].filter(Boolean);
-        
-        uniqueClients.forEach(c => {
-            let myEntries = erpData.filter(d => d.clientID === c);
-            if(!isAdmin) {
-                myEntries = myEntries.filter(d => d.addedByUID === loggedUser.username);
-            }
-            const bal = myEntries.reduce((s,t) => s + (t.bal || 0), 0);
+        try {
+            // Merge both lists safely using a Dictionary Map
+            let clientMap = {};
 
-            body.innerHTML += `<tr onclick="openProfile('${c}')" style="cursor:pointer">
-                <td><b>${c}</b></td>
-                <td style="color:red; font-weight:bold">₹${bal}</td>
-                <td><button class="btn" style="background:var(--accent); color:white; padding:5px 10px;">Open</button></td>
-            </tr>`;
-        });
+            // Load from Clients list
+            clientsList.forEach(c => {
+                if(c && c.id) clientMap[c.id] = { id: c.id, name: c.name || c.id, phone: c.phone || "-", bal: 0 };
+            });
+
+            // Load from Transactions (Catches legacy/old data)
+            erpData.forEach(t => {
+                if(t && t.clientID) {
+                    // Filter for Staff (Staff sees only clients they worked on or we can show all)
+                    if(!isAdmin && t.addedByUID !== loggedUser.username && t.service !== "Account Opened") return;
+                    
+                    if(!clientMap[t.clientID]) {
+                        clientMap[t.clientID] = { id: t.clientID, name: t.clientID, phone: "-", bal: 0 };
+                    }
+                    clientMap[t.clientID].bal += (parseFloat(t.bal) || 0);
+                }
+            });
+
+            const uniqueClients = Object.keys(clientMap);
+
+            // Empty State Check
+            if(uniqueClients.length === 0) {
+                body.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px; color:#888;">Hale tak koi client add nahi hoya. "Add Client" te click karo!</td></tr>';
+                return;
+            }
+
+            // Draw the table
+            uniqueClients.forEach(cid => {
+                const c = clientMap[cid];
+                body.innerHTML += `<tr onclick="openProfile('${cid}')" style="cursor:pointer; transition:0.2s;" onmouseover="this.style.background='#f1f2f6'" onmouseout="this.style.background='transparent'">
+                    <td><b>${c.name}</b><br><small style="color:#666">${c.phone}</small></td>
+                    <td style="color:${c.bal > 0 ? 'red' : '#05c46b'}; font-weight:bold">₹${c.bal}</td>
+                    <td><button class="btn" style="background:var(--accent); color:white; padding:5px 10px;"><i class="fa fa-folder-open"></i> Open</button></td>
+                </tr>`;
+            });
+        } catch(err) {
+            console.error(err);
+            body.innerHTML = '<tr><td colspan="3" style="color:red; text-align:center;">List load karan vich error aayi hai.</td></tr>';
+        }
     }
 
     function openProfile(cid) {
@@ -317,7 +347,8 @@
     function renderHistory() {
         const body = document.getElementById('pHistory'); body.innerHTML = ''; let bal = 0;
         erpData.filter(d => d.clientID === activeCID).forEach(t => {
-            if(!isAdmin && t.addedByUID !== loggedUser.username) return;
+            if(!isAdmin && t.addedByUID !== loggedUser.username && t.service !== "Account Opened") return;
+            
             bal += (t.bal || 0);
             
             if(t.service === "Account Opened") {
@@ -347,7 +378,7 @@
         document.getElementById('d-pend').innerText = "₹" + pend;
         
         let transClients = myData.map(d => d.clientID);
-        let savedClients = clientsList.map(c => c.name);
+        let savedClients = clientsList.map(c => c.id);
         document.getElementById('d-cl').innerText = [...new Set([...transClients, ...savedClients])].filter(Boolean).length;
     }
 
